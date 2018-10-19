@@ -1,6 +1,6 @@
 package com.ufcg.compiladores;
 
-import java_cup.runtime.Symbol;
+import java_cup.runtime.*;
 
 
 %%
@@ -27,7 +27,7 @@ Identifier = [:jletter:] [:jletterdigit:]*
 %%
 
 <YYINITIAL> { 
-	{Identifier}			{ return symbol(sym.IDENTIFIER); }
+	{Identifier}			{ return symbol(sym.IDENTIFIER, yytext()); }
 	{Whitespace}			{ /* ignore */ }
 }
 

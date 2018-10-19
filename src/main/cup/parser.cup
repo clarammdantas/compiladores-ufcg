@@ -1,0 +1,17 @@
+package com.ufcg.compiladores;
+
+import java_cup.runtime.*;
+
+
+parser code {:
+:};
+
+
+terminal IDENTIFIER;
+
+non terminal program;
+
+start with program;
+
+program ::= program IDENTIFIER;
+program ::= IDENTIFIER;
