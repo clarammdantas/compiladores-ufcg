@@ -34,7 +34,7 @@ RealNumber = [0-9]+"."+[0-9]
 
     /* Palavras reservadas */
     {ARRAY}                         { return symbol(sym.ARRAY);             }
-    {BEGIN}	                        { return symbol(sym.BEGIN);             }
+    {BEGIN}	                    { return symbol(sym.BEGIN);             }
     {DO}                            { return symbol(sym.DO);                }
     {END}                           { return symbol(sym.END);               }
     {PROCEDURE}                     { return symbol(sym.PROCEDURE);         }
@@ -65,7 +65,7 @@ RealNumber = [0-9]+"."+[0-9]
 
     /* relop */
     "="                             { return symbol(sym.EQUAL);             }
-	">="                            { return symbol(sym.GE);                }
+    ">="                            { return symbol(sym.GE);                }
     ">"                             { return symbol(sym.GT);                }
     "<="                            { return symbol(sym.LE);                }
     "<"                             { return symbol(sym.LT);                }
@@ -87,11 +87,11 @@ RealNumber = [0-9]+"."+[0-9]
     "*"                             { return symbol(sym.STAR, yytext());    }
 
 
-	{Identifier}			        { return symbol(sym.IDENTIFIER, yytext());  }
+    {Identifier}		    { return symbol(sym.IDENTIFIER, yytext());  }
 
-	{RealNumber}                    { return symbol(sym.REALNUMBER, yytext());  }
+    {RealNumber}                    { return symbol(sym.REALNUMBER, yytext());  }
 
-	{Whitespace}			        { /* ignore */                              }
+    {Whitespace}		    { /* ignore */                              }
 }
 
 [^]							        { throw new Error("Illegal character <" + yytext() + ">"); }
