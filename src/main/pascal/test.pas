@@ -1,0 +1,3 @@
+program Teste;
+begin
+end.

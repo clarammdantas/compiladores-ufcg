@@ -7,11 +7,20 @@ parser code {:
 :};
 
 
+terminal PROGRAM, BEGIN, END;
+terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS;
+terminal COMMA, COLON, SEMICOLON, FULL_STOP;
 terminal IDENTIFIER;
 
-non terminal program;
+non terminal root, program, declarations, body, statements, statement;
 
-start with program;
+start with root;
 
-program ::= program IDENTIFIER;
-program ::= IDENTIFIER;
+root ::= program declarations body FULL_STOP;
+program ::= PROGRAM IDENTIFIER SEMICOLON;
+
+declarations ::= /* empty */;
+body ::= BEGIN statements END;
+
+statements ::= statements statement
+	| /* empty */;
