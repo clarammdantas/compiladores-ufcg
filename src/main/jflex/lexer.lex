@@ -22,7 +22,7 @@ import java_cup.runtime.*;
 %}
 
 Whitespace = [ \r\n\t]
-Identifier = [:jletter:] [:jletterdigit:]*
+Identifier = [:jletter:][:jletterdigit:]*
 
 %%
 
