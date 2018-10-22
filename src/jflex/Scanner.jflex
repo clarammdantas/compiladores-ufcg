@@ -13,6 +13,8 @@ import java_cup.runtime.*;
 %column
 
 %{
+	StringBuilder string = new StringBuilder();
+
 	private Symbol symbol(int type) {
 		return new Symbol(type, yyline, yycolumn);
 	}
@@ -23,7 +25,14 @@ import java_cup.runtime.*;
 %}
 
 Whitespace = [ \r\n\t]
+StringCharacter = [^\r\n\']
+
+Boolean = "true" | "false"
+Integer = [0-9]+
+
 Identifier = [_a-zA-Z][_a-zA-Z0-9]*
+
+%state STRING
 
 %%
 
@@ -50,10 +59,20 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	">="					{ return symbol(sym.GE); }
 	"<="					{ return symbol(sym.LE); }
 	
-	"true" | "false"		{ return symbol(sym.BOOL, yytext()); }
+	{Boolean}				{ return symbol(sym.BOOLEAN, yytext()); }
+	{Integer}				{ return symbol(sym.INTEGER, Integer.valueOf(yytext())); }
+	
+	\'						{ yybegin(STRING); string.setLength(0); }
 	
 	{Identifier}			{ return symbol(sym.IDENTIFIER, yytext()); }
 	{Whitespace}			{ /* ignore */ }
+}
+
+<STRING> {
+	\'						{ yybegin(YYINITIAL); return symbol(sym.STRING, string.toString()); }
+	
+	{StringCharacter}+		{ string.append(yytext()); }
+	\'\'					{ string.append('\''); }
 }
 
 [^]							{ throw new Error("Illegal character <" + yytext() + ">"); }

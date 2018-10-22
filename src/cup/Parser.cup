@@ -9,7 +9,7 @@ parser code {:
 
 terminal PROGRAM, BEGIN, END, VARIABLE, FUNCTION, PROCEDURE;
 terminal EQ, NE, GT, LT, GE, LE;
-terminal BOOL;
+terminal BOOLEAN, INTEGER, STRING;
 terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS;
 terminal COMMA, COLON, SEMICOLON, FULL_STOP;
 terminal IDENTIFIER;
@@ -64,7 +64,10 @@ identifiers ::= identifiers COMMA IDENTIFIER
 	| IDENTIFIER
 	;
 
-literal ::= BOOL;
+literal ::= BOOLEAN
+	| INTEGER
+	| STRING
+	;
 
 statements ::= statements statement
 	| /* empty */

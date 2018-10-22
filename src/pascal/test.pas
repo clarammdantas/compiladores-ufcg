@@ -1,5 +1,8 @@
 program teste;
 
+var
+s: string = 'Can''t stop, won''t stop!';
+
 procedure soma(x,y:integer);
 var
 z: integer;
