@@ -59,6 +59,14 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	">="					{ return symbol(sym.GE); }
 	"<="					{ return symbol(sym.LE); }
 	
+	"+"						{ return symbol(sym.ADD); }
+	"-"						{ return symbol(sym.SUB); }
+	"*"						{ return symbol(sym.MUL); }
+	"/" | "div"				{ return symbol(sym.DIV); }
+	"%" | "mod"				{ return symbol(sym.MOD); }
+	
+	":="					{ return symbol(sym.ASSIGN); }
+	
 	{Boolean}				{ return symbol(sym.BOOLEAN, yytext()); }
 	{Integer}				{ return symbol(sym.INTEGER, Integer.valueOf(yytext())); }
 	

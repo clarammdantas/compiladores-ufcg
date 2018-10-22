@@ -1,13 +1,13 @@
 program teste;
 
-procedure soma(x,y:integer);
+procedure soma(x, y: integer);
 var
-z: integer;
+z: integer = 0;
 begin
     z := x + y;
 end;
 
-function soma_func(x, y:integer):integer;
+function soma_func(var x, y: integer): integer;
 var
 z: integer;
 begin
@@ -21,7 +21,7 @@ i, soma_res: integer;
 arr: array[1..10] of boolean;
 
 begin
-    a := 'Hello, world!';
+    a := 'Can''t stop, won''t stop!';
     i := 10;
     
     repeat
