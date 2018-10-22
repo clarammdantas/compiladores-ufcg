@@ -2,7 +2,7 @@
   <property name="cup"      location="src/cup"      />
   <property name="jflex"    location="src/jflex"    />
   <property name="java"     location="src/java"     />
-  <property name="gen"      location="target"  />
+  <property name="gen"      location="target"       />
   <property name="classes"  location="bin"          />
   <property name="lib"      location="lib"          />
   <property name="tools"    location="tools"        />
@@ -20,12 +20,12 @@
   <path id="libraries"> <files includes="${lib}/java-cup-11b-runtime.jar" /> </path>
 
   <target name="compile" depends="generate">
-    <javac srcdir="${java}" destdir="${classes}" > <classpath refid="libraries" /> </javac>
-    <javac srcdir="${gen}" destdir="${classes}" > <classpath refid="libraries" /> </javac>
+    <mkdir dir="${classes}" />
+    <javac srcdir="${java}; ${gen}" destdir="${classes}" > <classpath refid="libraries" /> </javac>
   </target>
 
   <target name="clean">
-    <delete dir="${gen}" />
     <delete dir="${classes}" />
+    <delete dir="${gen}" />
   </target>
 </project>
