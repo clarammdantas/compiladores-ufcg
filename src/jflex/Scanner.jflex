@@ -31,6 +31,8 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	"program"				{ return symbol(sym.PROGRAM); }
 	"begin"					{ return symbol(sym.BEGIN); }
 	"end"					{ return symbol(sym.END); }
+	"function"				{ return symbol(sym.FUNCTION); }
+	"procedure"				{ return symbol(sym.PROCEDURE); }
 	
 	"("						{ return symbol(sym.LEFT_PARENTHESIS); }
 	")"						{ return symbol(sym.RIGHT_PARENTHESIS); }
