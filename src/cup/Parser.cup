@@ -8,6 +8,7 @@ parser code {:
 
 
 terminal PROGRAM, BEGIN, END, VARIABLE, FUNCTION, PROCEDURE;
+terminal REPEAT, UNTIL;
 terminal EQ, NE, GT, LT, GE, LE, ADD, SUB, MUL, DIV, MOD, ASSIGN;
 terminal BOOLEAN, INTEGER, STRING;
 terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS;
@@ -18,8 +19,8 @@ non terminal root, program, body;
 non terminal declarations, declaration, statements, statement;
 non terminal variables, variable, identifiers, literal, opt_init;
 non terminal function, procedure, opt_params, params, param;
-non terminal attribuition, call, opt_arguments, arguments;
-non terminal exp, exp1, exp2, exp3;
+non terminal repeat, attribuition, call, opt_arguments, arguments;
+non terminal exp, exp1, exp2, exp3, exp4;
 
 start with root;
 
@@ -79,6 +80,7 @@ statements ::= statements statement
 
 statement ::= attribuition
 	| call SEMICOLON
+	| repeat
 	;
 
 call ::= IDENTIFIER LEFT_PARENTHESIS opt_arguments RIGHT_PARENTHESIS;
@@ -104,8 +106,6 @@ exp ::= exp EQ exp1
 	
 exp1 ::= exp1 ADD exp2
 	| exp1 SUB exp2
-	| ADD exp2
-	| SUB exp2
 	| exp2
 	;
 	
@@ -115,8 +115,16 @@ exp2 ::= exp2 MUL exp3
 	| exp3
 	;
 	
-exp3 ::= literal
-	| call
-	| IDENTIFIER
-	| LEFT_PARENTHESIS exp RIGHT_PARENTHESIS
+exp3 ::= ADD exp3
+	| SUB exp3
+	| exp4
 	;
+	
+exp4 ::= IDENTIFIER
+	| LEFT_PARENTHESIS exp RIGHT_PARENTHESIS
+	| literal
+	| call
+	;
+
+repeat ::= REPEAT statements UNTIL exp SEMICOLON;
+	

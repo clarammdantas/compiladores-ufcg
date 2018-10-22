@@ -43,6 +43,8 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	"var"					{ return symbol(sym.VARIABLE); }
 	"function"				{ return symbol(sym.FUNCTION); }
 	"procedure"				{ return symbol(sym.PROCEDURE); }
+	"repeat"				{ return symbol(sym.REPEAT); }
+	"until"					{ return symbol(sym.UNTIL); }
 	
 	"("						{ return symbol(sym.LEFT_PARENTHESIS); }
 	")"						{ return symbol(sym.RIGHT_PARENTHESIS); }

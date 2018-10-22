@@ -1,24 +1,24 @@
-program teste;
+program test;
 
-procedure soma(x, y: integer);
+procedure compute(x, y: integer);
 var
-z: integer = 0;
+	z: integer = -+-+25;
 begin
-    z := x + y;
+    z := y - -((-x / +y)) * (+y % -x);
 end;
 
-function soma_func(var x, y: integer): integer;
+function soma(var x, y: integer): integer;
 var
-z: integer;
+	z: integer;
 begin
     z := x + y;
     soma_func := z;
 end;
 
 var 
-a: string;
-i, soma_res: integer;
-arr: array[1..10] of boolean;
+	a: string;
+	i, soma_res: integer;
+	arr: array[1..10] of boolean;
 
 begin
     a := 'Can''t stop, won''t stop!';
@@ -28,7 +28,7 @@ begin
         arr[i] := i > 3;
         i := i - 1;
     until i = 1;
-    
-    soma(1, 2);
-    soma_res := soma_func(1, 2);
+
+    compute(1, 2);
+    soma_res := soma(1, 2);
 end.
