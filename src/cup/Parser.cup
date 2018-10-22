@@ -7,15 +7,17 @@ parser code {:
 :};
 
 
-terminal PROGRAM, BEGIN, END, FUNCTION, PROCEDURE;
+terminal PROGRAM, BEGIN, END, VARIABLE, FUNCTION, PROCEDURE;
+terminal EQ, NE, GT, LT, GE, LE;
+terminal BOOL;
 terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS;
 terminal COMMA, COLON, SEMICOLON, FULL_STOP;
 terminal IDENTIFIER;
 
 non terminal root, program, body;
 non terminal declarations, declaration, statements, statement;
-non terminal opt_params, params, param;
-non terminal function, procedure;
+non terminal variables, variable, identifiers, literal, opt_init;
+non terminal function, procedure, opt_params, params, param;
 
 start with root;
 
@@ -27,8 +29,20 @@ declarations ::= declarations declaration
 	| /* empty */
 	;
 
-declaration ::= function
+declaration ::= VARIABLE variables
+	| function
 	| procedure
+	;
+
+variables ::= variables variable 
+	| variable
+	;
+
+variable ::= IDENTIFIER COMMA identifiers COLON IDENTIFIER SEMICOLON
+	| IDENTIFIER COLON IDENTIFIER opt_init SEMICOLON;
+
+opt_init ::= EQ literal
+	| /* empty */
 	;
 
 procedure ::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END SEMICOLON;
@@ -44,7 +58,13 @@ params ::= params COMMA param
 	| param
 	;
 
-param ::= IDENTIFIER COLON IDENTIFIER;
+param ::= identifiers COLON IDENTIFIER;
+
+identifiers ::= identifiers COMMA IDENTIFIER
+	| IDENTIFIER
+	;
+
+literal ::= BOOL;
 
 statements ::= statements statement
 	| /* empty */
