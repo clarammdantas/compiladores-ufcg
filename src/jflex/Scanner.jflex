@@ -29,8 +29,13 @@ import java_cup.runtime.*;
 	
 	private void appendEscape(int cut) {
 		String text = yytext();
-		text = text.substring(0, text.length() + cut);
-		string.append((char) Integer.parseInt(text));		
+		
+		int code = Integer.parseInt(text.substring(0, text.length() + cut));
+		int line = yyline + 1;
+		int column = yycolumn + 1;
+		
+		if(code > 255) throw new Error("(" + line + "," + column + ") Escape character out of range <" + code + ">");
+		string.append((char) code);		
 	}
 %}
 
