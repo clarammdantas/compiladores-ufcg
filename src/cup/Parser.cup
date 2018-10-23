@@ -10,21 +10,21 @@ parser code {:
 terminal PROGRAM, BEGIN, END, VARIABLE, FUNCTION, PROCEDURE;
 terminal REPEAT, UNTIL;
 terminal EQ, NE, GT, LT, GE, LE, ADD, SUB, MUL, DIV, MOD, ASSIGN;
-terminal BOOLEAN, INTEGER, STRING;
-terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS;
-terminal COMMA, COLON, SEMICOLON, FULL_STOP;
+terminal BOOLEAN, INTEGER, STRING, ARRAY, OF, RANGE;
+terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS, LEFT_BRACKET, RIGHT_BRACKET;
+terminal COMMA, COLON, SEMICOLON, DOT;
 terminal IDENTIFIER;
 
 non terminal root, program, body;
 non terminal declarations, declaration, statements, statement;
-non terminal variables, variable, identifiers, literal, opt_init;
+non terminal variables, variable, type, index, identifiers, literal, opt_init;
 non terminal function, procedure, opt_params, params, param;
-non terminal repeat, attribuition, call, opt_arguments, arguments;
-non terminal exp, exp1, exp2, exp3, exp4;
+non terminal repeat, attribuition, array, call, opt_arguments, arguments;
+non terminal expressions, expression, exp0, exp1, exp2, exp3, exp4;
 
 start with root;
 
-root ::= program declarations body FULL_STOP;
+root ::= program declarations body DOT;
 program ::= PROGRAM IDENTIFIER SEMICOLON;
 body ::= BEGIN statements END;
 
@@ -41,10 +41,19 @@ variables ::= variables variable
 	| variable
 	;
 
-variable ::= IDENTIFIER COMMA identifiers COLON IDENTIFIER SEMICOLON
-	| IDENTIFIER COLON IDENTIFIER opt_init SEMICOLON;
+variable ::= IDENTIFIER COMMA identifiers COLON type SEMICOLON
+	| IDENTIFIER COLON type opt_init SEMICOLON;
 
-opt_init ::= EQ exp // apenas expressões constantes devem ser permitidas
+type ::= IDENTIFIER
+	| ARRAY OF type
+	| ARRAY LEFT_BRACKET index RIGHT_BRACKET OF type
+	;
+
+index ::= IDENTIFIER
+	| expression RANGE expression // expressões devem ser constantes
+	;
+
+opt_init ::= EQ expression // expressões devem ser constantes
 	| /* empty */
 	;
 
@@ -69,6 +78,8 @@ identifiers ::= identifiers COMMA IDENTIFIER
 	| IDENTIFIER
 	;
 
+array ::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
+
 literal ::= BOOLEAN
 	| INTEGER
 	| STRING
@@ -89,18 +100,25 @@ opt_arguments ::= arguments
 	| /* empty */
 	;
 
-arguments ::= arguments COMMA exp
-	| exp
+arguments ::= arguments COMMA expression
+	| expression
 	;
 
-attribuition ::= IDENTIFIER ASSIGN exp SEMICOLON;
+attribuition ::= IDENTIFIER ASSIGN expression SEMICOLON
+	| array ASSIGN expression SEMICOLON;
 
-exp ::= exp EQ exp1
-	| exp NE exp1
-	| exp GT exp1
-	| exp LT exp1
-	| exp GE exp1
-	| exp LE exp1
+expressions ::= expressions COMMA expression
+	| expression
+	;
+
+expression ::= exp0;
+
+exp0 ::= exp0 EQ exp1
+	| exp0 NE exp1
+	| exp0 GT exp1
+	| exp0 LT exp1
+	| exp0 GE exp1
+	| exp0 LE exp1
 	| exp1
 	;
 	
@@ -121,10 +139,11 @@ exp3 ::= ADD exp3
 	;
 	
 exp4 ::= IDENTIFIER
-	| LEFT_PARENTHESIS exp RIGHT_PARENTHESIS
+	| LEFT_PARENTHESIS exp0 RIGHT_PARENTHESIS
 	| literal
 	| call
+	| array
 	;
 
-repeat ::= REPEAT statements UNTIL exp SEMICOLON;
+repeat ::= REPEAT statements UNTIL expression SEMICOLON;
 	

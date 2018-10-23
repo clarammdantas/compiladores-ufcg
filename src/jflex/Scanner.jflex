@@ -46,13 +46,19 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	"repeat"				{ return symbol(sym.REPEAT); }
 	"until"					{ return symbol(sym.UNTIL); }
 	
+	"array"					{ return symbol(sym.ARRAY); }
+	"of"					{ return symbol(sym.OF); }
+	".."					{ return symbol(sym.RANGE); }
+	
 	"("						{ return symbol(sym.LEFT_PARENTHESIS); }
 	")"						{ return symbol(sym.RIGHT_PARENTHESIS); }
+	"["						{ return symbol(sym.LEFT_BRACKET); }
+	"]"						{ return symbol(sym.RIGHT_BRACKET); }
 	
 	","						{ return symbol(sym.COMMA); }
 	":"						{ return symbol(sym.COLON); }
 	";"						{ return symbol(sym.SEMICOLON); }
-	"."						{ return symbol(sym.FULL_STOP); }
+	"."						{ return symbol(sym.DOT); }
 	
 	"="						{ return symbol(sym.EQ); }
 	"<>"					{ return symbol(sym.NE); }
@@ -65,7 +71,7 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	"-"						{ return symbol(sym.SUB); }
 	"*"						{ return symbol(sym.MUL); }
 	"/" | "div"				{ return symbol(sym.DIV); }
-	"%" | "mod"				{ return symbol(sym.MOD); }
+	"mod"					{ return symbol(sym.MOD); }
 	
 	":="					{ return symbol(sym.ASSIGN); }
 	
