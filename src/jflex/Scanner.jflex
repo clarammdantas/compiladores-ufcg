@@ -22,17 +22,27 @@ import java_cup.runtime.*;
 	private Symbol symbol(int type, Object value) {
 		return new Symbol(type, yyline, yycolumn, value);
 	}
+	
+	private void appendEscape() {
+		appendEscape(0);
+	}
+	
+	private void appendEscape(int cut) {
+		String text = yytext();
+		text = text.substring(0, text.length() + cut);
+		string.append((char) Integer.parseInt(text));		
+	}
 %}
 
 Whitespace = [ \r\n\t]
-StringCharacter = [^\r\n\']
+String = [^\r\n\']+
 
 Boolean = "true" | "false"
 Integer = [0-9]+
 
 Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 
-%state STRING
+%state STRING, ESCAPE
 
 %%
 
@@ -76,9 +86,10 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	":="					{ return symbol(sym.ASSIGN); }
 	
 	{Boolean}				{ return symbol(sym.BOOLEAN, yytext()); }
-	{Integer}				{ return symbol(sym.INTEGER, Integer.valueOf(yytext())); }
+	{Integer}				{ return symbol(sym.INTEGER, Integer.parseInt(yytext())); }
 	
 	\'						{ yybegin(STRING); string.setLength(0); }
+	#						{ yybegin(ESCAPE); string.setLength(0); }
 	
 	{Identifier}			{ return symbol(sym.IDENTIFIER, yytext()); }
 	{Whitespace}			{ /* ignore */ }
@@ -86,9 +97,16 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 
 <STRING> {
 	\'						{ yybegin(YYINITIAL); return symbol(sym.STRING, string.toString()); }
+	\'#						{ yybegin(ESCAPE); }
 	
-	{StringCharacter}+		{ string.append(yytext()); }
+	{String}				{ string.append(yytext()); }
 	\'\'					{ string.append('\''); }
+}
+
+<ESCAPE> {
+	{Integer}#				{ appendEscape(-1); }
+	{Integer}\'				{ yybegin(STRING); appendEscape(-1); }
+	{Integer}				{ yybegin(YYINITIAL); appendEscape(); return symbol(sym.STRING, string.toString()); }
 }
 
 [^]							{ throw new Error("Illegal character <" + yytext() + ">"); }

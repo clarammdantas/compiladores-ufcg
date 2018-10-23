@@ -22,6 +22,7 @@ var
 	matrix: array of array of integer;
 
 begin
+    a := 'A'#66 + #67#68'E'#70;
     a := 'Can''t stop, won''t stop!';
     i := 10;
     

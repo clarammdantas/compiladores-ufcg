@@ -17,7 +17,7 @@ terminal IDENTIFIER;
 
 non terminal root, program, body;
 non terminal declarations, declaration, statements, statement;
-non terminal variables, variable, type, index, identifiers, literal, opt_init;
+non terminal variables, variable, type, subscript, identifiers, literal, opt_init;
 non terminal function, procedure, opt_params, params, param;
 non terminal repeat, attribuition, array, call, opt_arguments, arguments;
 non terminal expressions, expression, exp0, exp1, exp2, exp3, exp4;
@@ -46,10 +46,10 @@ variable ::= IDENTIFIER COMMA identifiers COLON type SEMICOLON
 
 type ::= IDENTIFIER
 	| ARRAY OF type
-	| ARRAY LEFT_BRACKET index RIGHT_BRACKET OF type
+	| ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type
 	;
 
-index ::= IDENTIFIER
+subscript ::= IDENTIFIER
 	| expression RANGE expression // expressões devem ser constantes
 	;
 
