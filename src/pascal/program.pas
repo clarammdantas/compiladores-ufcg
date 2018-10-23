@@ -19,7 +19,7 @@ var
 	a: string;
 	i, soma_res: integer;
 	arr: array[1..10] of boolean;
-	matrix: array of array of integer;
+	matrix: array of array[char] of integer;
 
 begin
     a := 'A'#66 + #67#68'E'#70;
@@ -28,7 +28,7 @@ begin
     
     repeat
         arr[i] := i > 3;
-        matrix[i, 10-i] := matrix[10-i, i];
+        matrix[i, 10-i] := matrix[i];
         i := i - 1;
     until i = 1;
 
