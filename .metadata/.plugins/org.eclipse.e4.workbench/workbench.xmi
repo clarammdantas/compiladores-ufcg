@@ -347,7 +347,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_ABbyQNQMEeitib4AKX79dg" elementId="org.eclipse.ui.workbench.file">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_ABzlsNQMEeitib4AKX79dg" elementId="print" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" enabled="false" command="_9pRCPNQLEeitib4AKX79dg"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_nNkegNcVEeiSAuWwFplbWQ" elementId="print" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/print_edit.png" tooltip="Print" command="_9pRCPNQLEeitib4AKX79dg"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_ABbyQdQMEeitib4AKX79dg" elementId="group.edit" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -375,7 +375,7 @@
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_ABbySNQMEeitib4AKX79dg" elementId="org.eclipse.ui.workbench.navigate">
         <tags>Draggable</tags>
-        <children xsi:type="menu:HandledToolItem" xmi:id="_AB2pANQMEeitib4AKX79dg" elementId="org.eclipse.ui.window.pinEditor" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_9pRBrtQLEeitib4AKX79dg"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_nNsaUNcVEeiSAuWwFplbWQ" elementId="org.eclipse.ui.window.pinEditor" visible="false" iconURI="platform:/plugin/org.eclipse.ui/icons/full/etool16/pin_editor.png" tooltip="Pin Editor" type="Check" command="_9pRBrtQLEeitib4AKX79dg"/>
       </children>
       <children xsi:type="menu:ToolBar" xmi:id="_ABbySdQMEeitib4AKX79dg" elementId="group.editor" toBeRendered="false">
         <tags>toolbarSeparator</tags>
@@ -2324,6 +2324,9 @@
   <commands xmi:id="__pvEFNQLEeitib4AKX79dg" elementId="AUTOGEN:::org.eclipse.mylyn.tasks.ui.actions.view/org.eclipse.mylyn.tasks.ui.open.repositories.view" commandName="Show Task Repositories View" description="Show Task Repositories View" category="_9pHQIdQLEeitib4AKX79dg"/>
   <commands xmi:id="__pvEFdQLEeitib4AKX79dg" elementId="AUTOGEN:::org.eclipse.mylyn.tasks.ui.actions.view/org.eclipse.mylyn.doc.legend.show.action" commandName="Show UI Legend" description="Show Tasks UI Legend" category="_9pHQIdQLEeitib4AKX79dg"/>
   <commands xmi:id="__pvEFtQLEeitib4AKX79dg" elementId="AUTOGEN:::org.eclipse.mylyn.tasks.ui.actions.view/org.eclipse.mylyn.context.ui.actions.tasklist.focus" commandName="Focus on Workweek" description="Focus on Workweek" category="_9pHQIdQLEeitib4AKX79dg"/>
+  <commands xmi:id="_mZA1EdcVEeiSAuWwFplbWQ" elementId="de.tum.in.www2.cupplugin.commands.RenameSymbol" commandName="Rename Symbol ..." category="_9pHQIdQLEeitib4AKX79dg"/>
+  <commands xmi:id="_mZBcINcVEeiSAuWwFplbWQ" elementId="de.tum.in.www2.cupplugin.commands.OpenDefinition" commandName="Open Definition" category="_9pHQIdQLEeitib4AKX79dg"/>
+  <commands xmi:id="_mZBcIdcVEeiSAuWwFplbWQ" elementId="de.tum.in.www2.cupplugin.commands.OpenDeclaration" commandName="Open Declaration" category="_9pHQIdQLEeitib4AKX79dg"/>
   <addons xmi:id="_9j5Y29QLEeitib4AKX79dg" elementId="org.eclipse.e4.core.commands.service" contributorURI="platform:/plugin/org.eclipse.platform" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
   <addons xmi:id="_9j5Y3NQLEeitib4AKX79dg" elementId="org.eclipse.e4.ui.contexts.service" contributorURI="platform:/plugin/org.eclipse.platform" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
   <addons xmi:id="_9j5Y3dQLEeitib4AKX79dg" elementId="org.eclipse.e4.ui.bindings.service" contributorURI="platform:/plugin/org.eclipse.platform" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>
@@ -2335,7 +2338,7 @@
   <addons xmi:id="_9j5Y49QLEeitib4AKX79dg" elementId="MinMax Addon" contributorURI="platform:/plugin/org.eclipse.platform" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.addons.swt/org.eclipse.e4.ui.workbench.addons.minmax.MinMaxAddon"/>
   <addons xmi:id="_9j5Y5NQLEeitib4AKX79dg" elementId="org.eclipse.ui.workbench.addon.0" contributorURI="platform:/plugin/org.eclipse.platform" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.HandlerProcessingAddon"/>
   <addons xmi:id="_9ko_sNQLEeitib4AKX79dg" elementId="SplitterAddon" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.addons.swt/org.eclipse.e4.ui.workbench.addons.splitteraddon.SplitterAddon"/>
-  <addons xmi:id="_IYS0IKimEeS11vbz3f9ezw" elementId="org.eclipse.ui.ide.addon.0" contributorURI="platform:/plugin/org.eclipse.ui.ide" contributionURI="bundleclass://org.eclipse.ui.ide/org.eclipse.ui.internal.ide.addons.SaveAllDirtyPartsAddon"/>
+  <addons xmi:id="_ma5rcNcVEeiSAuWwFplbWQ" elementId="org.eclipse.ui.ide.addon.0" contributionURI="bundleclass://org.eclipse.ui.ide/org.eclipse.ui.internal.ide.addons.SaveAllDirtyPartsAddon"/>
   <addons xmi:id="_dz0JgGOlEeSMMaPQU2nlzw" elementId="org.eclipse.ui.ide.application.addon.0" contributorURI="platform:/plugin/org.eclipse.ui.ide.application" contributionURI="bundleclass://org.eclipse.ui.ide.application/org.eclipse.ui.internal.ide.application.addons.ModelCleanupAddon"/>
   <categories xmi:id="_9pHQANQLEeitib4AKX79dg" elementId="org.eclipse.team.ui.category.team" name="Team" description="Actions that apply when working with a Team"/>
   <categories xmi:id="_9pHQAdQLEeitib4AKX79dg" elementId="org.eclipse.ui.category.views" name="Views" description="Commands for opening views"/>

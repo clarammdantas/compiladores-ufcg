@@ -37,6 +37,10 @@ import java_cup.runtime.*;
 		if(code > 255) throw new Error("(" + line + "," + column + ") Escape character out of range <" + code + ">");
 		string.append((char) code);		
 	}
+	
+	public int current_line() {
+  		return yyline+1;
+	}
 %}
 
 Whitespace = [ \r\n\t]
@@ -44,6 +48,8 @@ String = [^\r\n\']+
 
 Boolean = "true" | "false"
 Integer = [0-9]+
+
+Specialchar = [\$]
 
 Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 
@@ -114,4 +120,5 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	{Integer}				{ yybegin(YYINITIAL); appendEscape(); return symbol(sym.STRING, string.toString()); }
 }
 
-[^]							{ throw new Error("Illegal character <" + yytext() + ">"); }
+[^]							{ System.err.println("Illegal character <" + yytext() + ">" + " at line:" + (yyline + 1)); Main.p.numErrors++; }
+

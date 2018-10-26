@@ -1,9 +1,39 @@
 package com.ufcg.compiladores;
 
 import java_cup.runtime.*;
+import java.util.List;
+import java.util.LinkedList;
+import java.util.ArrayList;
 
 
 parser code {:
+
+	public static int numErrors = 0;
+
+	@Override
+	public void report_error(String message, Object info) {
+   
+        
+        StringBuilder m = new StringBuilder("Error");
+   		numErrors++; 
+          
+        m.append(" : "+message);
+   
+        System.err.println("Syntax error at line: " + Main.pascalLexer.current_line());
+        System.err.println(m + "" + (info instanceof String ? info : ""));
+        
+    }
+
+	@Override
+    public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+        System.exit(1);
+    }
+
+	@Override
+	public void syntax_error(Symbol cur_token) {
+		// temporary
+	}
 :};
 
 
@@ -25,10 +55,13 @@ non terminal expressions, expression, exp0, exp1, exp2, exp3, exp4;
 start with root;
 
 root ::= program declarations body DOT;
-program ::= PROGRAM IDENTIFIER SEMICOLON;
+program ::= PROGRAM IDENTIFIER SEMICOLON
+	| error {: parser.report_error("","expected program identifier before token."); :}
+	;
 body ::= BEGIN statements END;
 
 declarations ::= declarations declaration
+	| error {: parser.report_error("","expected ';' before token."); :} SEMICOLON
 	| /* empty */
 	;
 
@@ -42,11 +75,15 @@ variables ::= variables variable
 	;
 
 variable ::= IDENTIFIER COMMA identifiers COLON type SEMICOLON
-	| IDENTIFIER COLON type opt_init SEMICOLON;
+	| IDENTIFIER COLON type opt_init SEMICOLON
+	| IDENTIFIER IDENTIFIER error {: parser.report_error("","expected ',' before last identifier."); :}
+	| error {: parser.report_error("","expected ';' before token."); :}
+	;
 
 type ::= IDENTIFIER
 	| ARRAY OF type
 	| ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type
+	| error {: parser.report_error("","expected type declaration before token."); :}
 	;
 
 subscript ::= IDENTIFIER
@@ -76,6 +113,7 @@ param ::= identifiers COLON IDENTIFIER
 
 identifiers ::= identifiers COMMA IDENTIFIER
 	| IDENTIFIER
+	| error {: parser.report_error("","expected ',' before token."); :}
 	;
 
 array ::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;

@@ -3,12 +3,19 @@ package com.ufcg.compiladores;
 import java.io.FileReader;
 
 public class Main {
+	public static Lexer pascalLexer;
+	public static Parser p; 
 	public static void main(String[] args) {
         try {
-            Parser p = new Parser(new Lexer(new FileReader("src/pascal/program.pas")));
+        	pascalLexer = new Lexer(new FileReader("src/pascal/program.pas"));
+            p = new Parser(pascalLexer);
             Object result = p.parse().value;
 
-            System.out.println("Compilation successful!");
+            if (p.numErrors > 0) {
+            	System.err.println("Compilation error!");
+            } else {
+            	System.out.println("Compilation successful!");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
