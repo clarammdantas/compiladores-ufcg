@@ -56,12 +56,12 @@ start with root;
 
 root ::= program declarations body DOT;
 program ::= PROGRAM IDENTIFIER SEMICOLON
+	| PROGRAM IDENTIFIER error {: parser.report_error("","expected ';' before token."); :}
 	| error {: parser.report_error("","expected program identifier before token."); :}
 	;
 body ::= BEGIN statements END;
 
 declarations ::= declarations declaration
-	| error {: parser.report_error("","expected ';' before token."); :} SEMICOLON
 	| /* empty */
 	;
 
@@ -77,7 +77,7 @@ variables ::= variables variable
 variable ::= IDENTIFIER COMMA identifiers COLON type SEMICOLON
 	| IDENTIFIER COLON type opt_init SEMICOLON
 	| IDENTIFIER IDENTIFIER error {: parser.report_error("","expected ',' before last identifier."); :}
-	| error {: parser.report_error("","expected ';' before token."); :}
+	| IDENTIFIER COLON error {: parser.report_error("","expected ';' before token."); :}
 	;
 
 type ::= IDENTIFIER
@@ -143,7 +143,11 @@ arguments ::= arguments COMMA expression
 	;
 
 attribuition ::= IDENTIFIER ASSIGN expression SEMICOLON
-	| array ASSIGN expression SEMICOLON;
+	| array ASSIGN expression SEMICOLON
+	| IDENTIFIER ASSIGN error {: parser.report_error("","expected expression before token."); :}
+ 	| error {: parser.report_error("","expected ';' before token."); :}
+	
+	;
 
 expressions ::= expressions COMMA expression
 	| expression
