@@ -23,37 +23,35 @@ import java_cup.runtime.*;
 		return new Symbol(type, yyline, yycolumn, value);
 	}
 	
-	private void appendEscape() {
-		appendEscape(0);
+	private void error(String message) {
+		ErrorCounter.increase();
+		String output = String.format("(%d,%d) Error: %s", yyline+1, yycolumn+1, message);
+		System.err.println(output);
 	}
 	
-	private void appendEscape(int cut) {
-		String text = yytext();
-		
-		int code = Integer.parseInt(text.substring(0, text.length() + cut));
-		int line = yyline + 1;
-		int column = yycolumn + 1;
-		
-		if(code > 255) throw new Error("(" + line + "," + column + ") Escape character out of range <" + code + ">");
-		string.append((char) code);		
+	private void fatal(String message) {
+		String output = String.format("(%d,%d) Fatal: %s", yyline+1, yycolumn+1, message);
+		System.err.println(output);
+		System.exit(1);
 	}
 	
-	public int current_line() {
-  		return yyline+1;
+	private void parseEscape() {
+		int code = Integer.parseInt(yytext());
+		if(code > 255) error("Illegal char constant");
+		string.append((char) code);
 	}
 %}
 
 Whitespace = [ \r\n\t]
-String = [^\r\n\']+
+LineTerminator = \r|\n|\r\n
 
 Boolean = "true" | "false"
 Integer = [0-9]+
-
-Specialchar = [\$]
+String = [^\r\n\']+
 
 Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 
-%state STRING, ESCAPE
+%state STRING, ESCAPE, BRANCH
 
 %%
 
@@ -61,7 +59,7 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	"program"				{ return symbol(sym.PROGRAM); }
 	"begin"					{ return symbol(sym.BEGIN); }
 	"end"					{ return symbol(sym.END); }
-	"var"					{ return symbol(sym.VARIABLE); }
+	"var"					{ return symbol(sym.VAR); }
 	"function"				{ return symbol(sym.FUNCTION); }
 	"procedure"				{ return symbol(sym.PROCEDURE); }
 	"repeat"				{ return symbol(sym.REPEAT); }
@@ -112,13 +110,18 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	
 	{String}				{ string.append(yytext()); }
 	\'\'					{ string.append('\''); }
+	
+	{LineTerminator}		{ fatal("String exceeds line"); }
 }
 
 <ESCAPE> {
-	{Integer}#				{ appendEscape(-1); }
-	{Integer}\'				{ yybegin(STRING); appendEscape(-1); }
-	{Integer}				{ yybegin(YYINITIAL); appendEscape(); return symbol(sym.STRING, string.toString()); }
+	{Integer} / [\'#]		{ yybegin(BRANCH); parseEscape(); }
+	{Integer}				{ yybegin(YYINITIAL); parseEscape(); return symbol(sym.STRING, string.toString()); }
 }
 
-[^]							{ System.err.println("Illegal character <" + yytext() + ">" + " at line:" + (yyline + 1)); Main.p.numErrors++; }
+<BRANCH> {
+	\'						{ yybegin(STRING); }
+	#						{ yybegin(ESCAPE); }
+}
 
+[^]							{ fatal("Illegal character \"" + yytext() + "\""); }

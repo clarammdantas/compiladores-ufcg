@@ -1,22 +1,24 @@
 package com.ufcg.compiladores;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 
 public class Main {
-	public static Lexer pascalLexer;
-	public static Parser p; 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException {
+    	Lexer lexer = new Lexer(new FileReader("src/pascal/program.pas"));
+        Parser p = new Parser(lexer);
+        
         try {
-        	pascalLexer = new Lexer(new FileReader("src/pascal/program.pas"));
-            p = new Parser(pascalLexer);
             Object result = p.parse().value;
 
-            if (p.numErrors > 0) {
-            	System.err.println("Compilation error!");
-            } else {
-            	System.out.println("Compilation successful!");
+            if(ErrorCounter.get() == 0) System.out.println("Compilation successful");
+            else {
+            	String output = String.format("There were %d errors compiling module", ErrorCounter.get());
+            	System.err.println(output);
             }
-        } catch (Exception e) {
+        }
+        
+        catch (Exception e) {
             e.printStackTrace();
         }
 	}

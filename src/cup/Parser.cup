@@ -1,43 +1,26 @@
 package com.ufcg.compiladores;
 
 import java_cup.runtime.*;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.ArrayList;
 
+action code {:
+:}
 
 parser code {:
-
-	public static int numErrors = 0;
-
 	@Override
-	public void report_error(String message, Object info) {
-   
-        
-        StringBuilder m = new StringBuilder("Error");
-   		numErrors++; 
-          
-        m.append(" : "+message);
-   
-        System.err.println("Syntax error at line: " + Main.pascalLexer.current_line());
-        System.err.println(m + "" + (info instanceof String ? info : ""));
-        
-    }
-
-	@Override
-    public void report_fatal_error(String message, Object info) {
-        report_error(message, info);
-        System.exit(1);
-    }
+	public int error_sync_size() {
+		return 1;
+	}
 
 	@Override
 	public void syntax_error(Symbol cur_token) {
-		// temporary
-	}
+		ErrorCounter.increase();
+		String output = String.format("(%d,%d) Error: Illegal syntax\n", cur_token.left+1, cur_token.right+1);
+		report_error(output, null);
+	} 
 :};
 
 
-terminal PROGRAM, BEGIN, END, VARIABLE, FUNCTION, PROCEDURE;
+terminal PROGRAM, BEGIN, END, VAR, FUNCTION, PROCEDURE;
 terminal REPEAT, UNTIL;
 terminal EQ, NE, GT, LT, GE, LE, ADD, SUB, MUL, DIV, MOD, ASSIGN;
 terminal BOOLEAN, INTEGER, STRING, ARRAY, OF, RANGE;
@@ -54,138 +37,111 @@ non terminal expressions, expression, exp0, exp1, exp2, exp3, exp4;
 
 start with root;
 
-root ::= program declarations body DOT;
-program ::= PROGRAM IDENTIFIER SEMICOLON
-	| PROGRAM IDENTIFIER error {: parser.report_error("","expected ';' before token."); :}
-	| error {: parser.report_error("","expected program identifier before token."); :}
-	;
-body ::= BEGIN statements END;
+root			::= program declarations body DOT;
+program			::= PROGRAM IDENTIFIER SEMICOLON;
 
-declarations ::= declarations declaration
-	| /* empty */
-	;
+body			::= BEGIN statements END
+				|	BEGIN statements error END;
 
-declaration ::= VARIABLE variables
-	| function
-	| procedure
-	;
+declarations	::= declarations declaration
+				|	/* empty */;
 
-variables ::= variables variable 
-	| variable
-	;
+declaration		::= VAR variables
+				|	function SEMICOLON
+				|	procedure SEMICOLON
+				|	error;
 
-variable ::= IDENTIFIER COMMA identifiers COLON type SEMICOLON
-	| IDENTIFIER COLON type opt_init SEMICOLON
-	| IDENTIFIER IDENTIFIER error {: parser.report_error("","expected ',' before last identifier."); :}
-	| IDENTIFIER COLON error {: parser.report_error("","expected ';' before token."); :}
-	;
+variables		::= variables variable SEMICOLON
+				|	variable SEMICOLON;
 
-type ::= IDENTIFIER
-	| ARRAY OF type
-	| ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type
-	| error {: parser.report_error("","expected type declaration before token."); :}
-	;
+variable		::= IDENTIFIER COMMA identifiers COLON type 
+				|	IDENTIFIER COLON type opt_init;
 
-subscript ::= IDENTIFIER
-	| expression RANGE expression // expressões devem ser constantes
-	;
+type			::= IDENTIFIER
+				|	ARRAY OF type
+				|	ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type;
 
-opt_init ::= EQ expression // expressões devem ser constantes
-	| /* empty */
-	;
+subscript		::= IDENTIFIER
+				|	expression RANGE expression; // expressões devem ser constantes
 
-procedure ::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END SEMICOLON;
+opt_init		::= EQ expression // expressões devem ser constantes
+				|	/* empty */;
 
-function ::= FUNCTION IDENTIFIER opt_params COLON IDENTIFIER SEMICOLON declarations BEGIN statements END SEMICOLON;
+procedure		::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations body
+				|	PROCEDURE error END;
 
-opt_params ::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
-	| LEFT_PARENTHESIS RIGHT_PARENTHESIS
-	| /* empty */
-	;
+function		::= FUNCTION IDENTIFIER opt_params COLON IDENTIFIER SEMICOLON declarations body
+				|	FUNCTION error END;
 
-params ::= params SEMICOLON param
-	| param
-	;
+opt_params		::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
+				|	LEFT_PARENTHESIS RIGHT_PARENTHESIS
+				|	/* empty */;
 
-param ::= identifiers COLON IDENTIFIER
-	| VARIABLE identifiers COLON IDENTIFIER
-	;
+params			::= params SEMICOLON param
+				|	param;
 
-identifiers ::= identifiers COMMA IDENTIFIER
-	| IDENTIFIER
-	| error {: parser.report_error("","expected ',' before token."); :}
-	;
+param			::= identifiers COLON IDENTIFIER
+				|	VAR identifiers COLON IDENTIFIER;
 
-array ::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
+identifiers		::= identifiers COMMA IDENTIFIER
+				|	IDENTIFIER;
 
-literal ::= BOOLEAN
-	| INTEGER
-	| STRING
-	;
+array			::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
 
-statements ::= statements statement
-	| /* empty */
-	;
+literal			::= BOOLEAN
+				|	INTEGER
+				|	STRING;
 
-statement ::= attribuition
-	| call SEMICOLON
-	| repeat
-	;
+statements		::= statements statement SEMICOLON
+				|	/* empty */;
 
-call ::= IDENTIFIER LEFT_PARENTHESIS opt_arguments RIGHT_PARENTHESIS;
+statement		::= attribuition
+				|	call
+				|	repeat
+				|	error;
 
-opt_arguments ::= arguments
-	| /* empty */
-	;
+call			::= IDENTIFIER LEFT_PARENTHESIS opt_arguments RIGHT_PARENTHESIS;
 
-arguments ::= arguments COMMA expression
-	| expression
-	;
+opt_arguments	::= arguments
+				|	/* empty */;
 
-attribuition ::= IDENTIFIER ASSIGN expression SEMICOLON
-	| array ASSIGN expression SEMICOLON
-	| IDENTIFIER ASSIGN error {: parser.report_error("","expected expression before token."); :}
- 	| error {: parser.report_error("","expected ';' before token."); :}
+arguments		::= arguments COMMA expression
+				|	expression;
+
+attribuition	::= IDENTIFIER ASSIGN expression
+				|	array ASSIGN expression;
+
+expressions		::= expressions COMMA expression
+				|	expression;
+
+expression		::= exp0;
+
+exp0			::= exp0 EQ exp1
+				|	exp0 NE exp1
+				|	exp0 GT exp1
+				|	exp0 LT exp1
+				|	exp0 GE exp1
+				|	exp0 LE exp1
+				|	exp1;
 	
-	;
-
-expressions ::= expressions COMMA expression
-	| expression
-	;
-
-expression ::= exp0;
-
-exp0 ::= exp0 EQ exp1
-	| exp0 NE exp1
-	| exp0 GT exp1
-	| exp0 LT exp1
-	| exp0 GE exp1
-	| exp0 LE exp1
-	| exp1
-	;
+exp1			::= exp1 ADD exp2
+				|	exp1 SUB exp2
+				|	exp2;
 	
-exp1 ::= exp1 ADD exp2
-	| exp1 SUB exp2
-	| exp2
-	;
+exp2			::= exp2 MUL exp3
+				|	exp2 DIV exp3
+				|	exp2 MOD exp3
+				|	exp3;
 	
-exp2 ::= exp2 MUL exp3
-	| exp2 DIV exp3
-	| exp2 MOD exp3
-	| exp3
-	;
+exp3			::= ADD exp3
+				|	SUB exp3
+				|	exp4;
 	
-exp3 ::= ADD exp3
-	| SUB exp3
-	| exp4
-	;
-	
-exp4 ::= IDENTIFIER
-	| LEFT_PARENTHESIS exp0 RIGHT_PARENTHESIS
-	| literal
-	| call
-	| array
-	;
+exp4			::= IDENTIFIER
+				|	LEFT_PARENTHESIS exp0 RIGHT_PARENTHESIS
+				|	literal
+				|	call
+				|	array;
 
-repeat ::= REPEAT statements UNTIL expression SEMICOLON;
+repeat			::= REPEAT statements UNTIL expression;
 	
