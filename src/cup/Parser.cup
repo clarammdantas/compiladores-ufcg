@@ -7,7 +7,7 @@ parser code {:
 :};
 
 
-terminal PROGRAM, BEGIN, END, VARIABLE, FUNCTION, PROCEDURE;
+terminal PROGRAM, BEGIN, END, VAR, FUNCTION, PROCEDURE;
 terminal REPEAT, UNTIL;
 terminal EQ, NE, GT, LT, GE, LE, ADD, SUB, MUL, DIV, MOD, ASSIGN;
 terminal BOOLEAN, INTEGER, STRING, ARRAY, OF, RANGE;
@@ -24,126 +24,105 @@ non terminal expressions, expression, exp0, exp1, exp2, exp3, exp4;
 
 start with root;
 
-root ::= program declarations body DOT;
-program ::= PROGRAM IDENTIFIER SEMICOLON;
-body ::= BEGIN statements END;
+root			::= program declarations body DOT;
+program			::= PROGRAM IDENTIFIER SEMICOLON;
+body			::= BEGIN statements END;
 
-declarations ::= declarations declaration
-	| /* empty */
-	;
+declarations	::= declarations declaration
+				|	/* empty */;
 
-declaration ::= VARIABLE variables
-	| function
-	| procedure
-	;
+declaration		::= VAR variables
+				|	function SEMICOLON
+				|	procedure SEMICOLON;
 
-variables ::= variables variable 
-	| variable
-	;
+variables		::= variables variable SEMICOLON
+				|	variable SEMICOLON;
 
-variable ::= IDENTIFIER COMMA identifiers COLON type SEMICOLON
-	| IDENTIFIER COLON type opt_init SEMICOLON;
+variable		::= IDENTIFIER COMMA identifiers COLON type 
+				|	IDENTIFIER COLON type opt_init;
 
-type ::= IDENTIFIER
-	| ARRAY OF type
-	| ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type
-	;
+type			::= IDENTIFIER
+				|	ARRAY OF type
+				|	ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type;
 
-subscript ::= IDENTIFIER
-	| expression RANGE expression // expressões devem ser constantes
-	;
+subscript		::= IDENTIFIER
+				|	expression RANGE expression; // expressões devem ser constantes
 
-opt_init ::= EQ expression // expressões devem ser constantes
-	| /* empty */
-	;
+opt_init		::= EQ expression // expressões devem ser constantes
+				|	/* empty */;
 
-procedure ::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END SEMICOLON;
+procedure		::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END;
 
-function ::= FUNCTION IDENTIFIER opt_params COLON IDENTIFIER SEMICOLON declarations BEGIN statements END SEMICOLON;
+function		::= FUNCTION IDENTIFIER opt_params COLON IDENTIFIER SEMICOLON declarations BEGIN statements END;
 
-opt_params ::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
-	| LEFT_PARENTHESIS RIGHT_PARENTHESIS
-	| /* empty */
-	;
+opt_params		::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
+				|	LEFT_PARENTHESIS RIGHT_PARENTHESIS
+				|	/* empty */;
 
-params ::= params SEMICOLON param
-	| param
-	;
+params			::= params SEMICOLON param
+				|	param;
 
-param ::= identifiers COLON IDENTIFIER
-	| VARIABLE identifiers COLON IDENTIFIER
-	;
+param			::= identifiers COLON IDENTIFIER
+				|	VAR identifiers COLON IDENTIFIER;
 
-identifiers ::= identifiers COMMA IDENTIFIER
-	| IDENTIFIER
-	;
+identifiers		::= identifiers COMMA IDENTIFIER
+				|	IDENTIFIER;
 
-array ::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
+array			::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
 
-literal ::= BOOLEAN
-	| INTEGER
-	| STRING
-	;
+literal			::= BOOLEAN
+				|	INTEGER
+				|	STRING;
 
-statements ::= statements statement
-	| /* empty */
-	;
+statements		::= statements statement SEMICOLON
+				|	/* empty */;
 
-statement ::= attribuition
-	| call SEMICOLON
-	| repeat
-	;
+statement		::= attribuition
+				|	call
+				|	repeat;
 
-call ::= IDENTIFIER LEFT_PARENTHESIS opt_arguments RIGHT_PARENTHESIS;
+call			::= IDENTIFIER LEFT_PARENTHESIS opt_arguments RIGHT_PARENTHESIS;
 
-opt_arguments ::= arguments
-	| /* empty */
-	;
+opt_arguments	::= arguments
+				|	/* empty */;
 
-arguments ::= arguments COMMA expression
-	| expression
-	;
+arguments		::= arguments COMMA expression
+				|	expression;
 
-attribuition ::= IDENTIFIER ASSIGN expression SEMICOLON
-	| array ASSIGN expression SEMICOLON;
+attribuition	::= IDENTIFIER ASSIGN expression
+				|	array ASSIGN expression;
 
-expressions ::= expressions COMMA expression
-	| expression
-	;
+expressions		::= expressions COMMA expression
+				|	expression;
 
-expression ::= exp0;
+expression		::= exp0;
 
-exp0 ::= exp0 EQ exp1
-	| exp0 NE exp1
-	| exp0 GT exp1
-	| exp0 LT exp1
-	| exp0 GE exp1
-	| exp0 LE exp1
-	| exp1
-	;
+exp0			::= exp0 EQ exp1
+				|	exp0 NE exp1
+				|	exp0 GT exp1
+				|	exp0 LT exp1
+				|	exp0 GE exp1
+				|	exp0 LE exp1
+				|	exp1;
 	
-exp1 ::= exp1 ADD exp2
-	| exp1 SUB exp2
-	| exp2
-	;
+exp1			::= exp1 ADD exp2
+				|	exp1 SUB exp2
+				|	exp2;
 	
-exp2 ::= exp2 MUL exp3
-	| exp2 DIV exp3
-	| exp2 MOD exp3
-	| exp3
-	;
+exp2			::= exp2 MUL exp3
+				|	exp2 DIV exp3
+				|	exp2 MOD exp3
+				|	exp3;
 	
-exp3 ::= ADD exp3
-	| SUB exp3
-	| exp4
-	;
+exp3			::= ADD exp3
+				|	SUB exp3
+				|	exp4;
 	
-exp4 ::= IDENTIFIER
-	| LEFT_PARENTHESIS exp0 RIGHT_PARENTHESIS
-	| literal
-	| call
-	| array
-	;
+exp4			::= IDENTIFIER
+				|	LEFT_PARENTHESIS exp0 RIGHT_PARENTHESIS
+				|	literal
+				|	call
+				|	array;
 
-repeat ::= REPEAT statements UNTIL expression SEMICOLON;
+repeat			::= REPEAT statements UNTIL expression;
 	

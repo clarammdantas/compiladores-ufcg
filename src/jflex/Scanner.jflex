@@ -66,7 +66,7 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	"program"				{ return symbol(sym.PROGRAM); }
 	"begin"					{ return symbol(sym.BEGIN); }
 	"end"					{ return symbol(sym.END); }
-	"var"					{ return symbol(sym.VARIABLE); }
+	"var"					{ return symbol(sym.VAR); }
 	"function"				{ return symbol(sym.FUNCTION); }
 	"procedure"				{ return symbol(sym.PROCEDURE); }
 	"repeat"				{ return symbol(sym.REPEAT); }
