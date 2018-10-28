@@ -16,7 +16,7 @@ parser code {:
 		ErrorCounter.increase();
 		String output = String.format("(%d,%d) Error: Illegal syntax\n", cur_token.left+1, cur_token.right+1);
 		report_error(output, null);
-	} 
+	}
 :};
 
 
@@ -54,7 +54,7 @@ declaration		::= VAR variables
 variables		::= variables variable SEMICOLON
 				|	variable SEMICOLON;
 
-variable		::= IDENTIFIER COMMA identifiers COLON type 
+variable		::= IDENTIFIER COMMA identifiers COLON type
 				|	IDENTIFIER COLON type opt_init;
 
 type			::= IDENTIFIER

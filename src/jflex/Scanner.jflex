@@ -42,14 +42,15 @@ import java_cup.runtime.*;
 	}
 %}
 
-Whitespace = [ \r\n\t]
-LineTerminator = \r|\n|\r\n
+Whitespace		= [ \r\n\t]
+LineTerminator	= \r|\n|\r\n
 
-Boolean = "true" | "false"
-Integer = [0-9]+
-String = [^\r\n\']+
+Boolean			= "true" | "false"
+Integer			= [0-9]+
+String			= [^\r\n\']+
 
-Identifier = [_a-zA-Z][_a-zA-Z0-9]*
+Identifier		= [_a-zA-Z][_a-zA-Z0-9]*
+Invalid			= [0-9]+[_a-zA-Z][_a-zA-Z0-9]*
 
 %state STRING, ESCAPE, BRANCH
 
@@ -101,6 +102,8 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	#						{ yybegin(ESCAPE); string.setLength(0); }
 	
 	{Identifier}			{ return symbol(sym.IDENTIFIER, yytext()); }
+	{Invalid}				{ error("Illegal identifier"); return symbol(sym.IDENTIFIER, yytext()); }
+	
 	{Whitespace}			{ /* ignore */ }
 }
 
