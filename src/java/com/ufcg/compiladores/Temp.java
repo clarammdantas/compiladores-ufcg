@@ -1,4 +1,4 @@
-package com.ufcg.compiladores.generation;
+package com.ufcg.compiladores;
 
 public class Temp {
 	private static int count = 0;
@@ -21,7 +21,7 @@ public class Temp {
 		count -= n;
 	}
 	
-	public static int getSize() {
+	public static int size() {
 		return size;
 	}
 }

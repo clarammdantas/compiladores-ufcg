@@ -99,8 +99,8 @@ identifiers		::= identifiers COMMA IDENTIFIER
 
 array			::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
 
-literal			::= BOOLEAN
-				|	INTEGER:i {: RESULT = Expr.integer(i); :}
+literal			::= BOOLEAN:b {: RESULT = Expr.literal(b ? 1 : 0); :}
+				|	INTEGER:i {: RESULT = Expr.literal(i); :}
 				|	STRING;
 
 statements		::= statements:l statement:s SEMICOLON {: l.add(s); RESULT = l; :}
@@ -108,7 +108,7 @@ statements		::= statements:l statement:s SEMICOLON {: l.add(s); RESULT = l; :}
 
 statement		::= assign:a {: RESULT = a; :}
 				|	call
-				|	repeat
+				|	repeat:r {: RESULT = r; :}
 				|	error;
 
 call			::= IDENTIFIER LEFT_PARENTHESIS opt_arguments RIGHT_PARENTHESIS;
@@ -154,5 +154,5 @@ exp4			::= IDENTIFIER
 				|	call
 				|	array;
 
-repeat			::= REPEAT statements UNTIL expression;
+repeat			::= REPEAT statements:s UNTIL expression:e {: RESULT = Stmt.repeat(s, e); :};
 	

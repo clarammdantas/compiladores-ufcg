@@ -1,12 +1,9 @@
-package com.ufcg.compiladores.generation;
+package com.ufcg.compiladores;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import com.ufcg.compiladores.generation.Expr.Binex;
-import com.ufcg.compiladores.generation.Expr.IntegerLiteral;
-import com.ufcg.compiladores.generation.Expr.Unex;
-import com.ufcg.compiladores.generation.Stmt.Assign;
+import com.ufcg.compiladores.generation.*;
 
 public class Generator {
 	PrintWriter writer;
@@ -38,23 +35,39 @@ public class Generator {
 		writer.println("\tint 0x80\n");
 
 		writer.println("section .bss");
-		for (int i = 0; i < Temp.getSize(); ++i) {
+		for (int i = 0; i < Temp.size(); ++i) {
 			writer.println("\tt" + i + " resd 1");
 		}
 	}
 
-	public boolean preVisit(Assign s) {
+	public boolean preVisit(Stmt.Assign s) {
+		// TODO Auto-generated method stub
 		return true;
 	}
 
-	public void postVisit(Assign s) {
+	public void postVisit(Stmt.Assign s) {
+		Temp.release();
 	}
 
-	public boolean preVisit(Binex e) {
+	public boolean preVisit(Stmt.Repeat r) {
+		r.label = Label.get();
+		writer.println(String.format("%s:", r.label));
 		return true;
 	}
 
-	public void postVisit(Binex e) {
+	public void postVisit(Stmt.Repeat r) {
+		Temp.release();
+
+		writer.println(String.format("\tmov al, [%s]", r.e.reg));
+		writer.println(String.format("\tcmp al, 1"));
+		writer.println(String.format("\tjl %s\n", r.label));
+	}
+
+	public boolean preVisit(Expr.Binex e) {
+		return true;
+	}
+
+	public void postVisit(Expr.Binex e) {
 		Temp.release(2);
 		e.reg = Temp.get();
 
@@ -91,11 +104,11 @@ public class Generator {
 		}
 	}
 
-	public boolean preVisit(Unex e) {
+	public boolean preVisit(Expr.Unex e) {
 		return true;
 	}
 
-	public void postVisit(Unex e) {
+	public void postVisit(Expr.Unex e) {
 		Temp.release();
 		e.reg = Temp.get();
 
@@ -104,11 +117,11 @@ public class Generator {
 		writer.println(String.format("\tmov [%s], eax\n", e.reg));
 	}
 
-	public boolean preVisit(Expr.IntegerLiteral e) {
+	public boolean preVisit(Expr.Literal e) {
 		return true;
 	}
 
-	public void postVisit(Expr.IntegerLiteral e) {
+	public void postVisit(Expr.Literal e) {
 		e.reg = Temp.get();
 
 		writer.println(String.format("\tmov eax, %d", e.val));

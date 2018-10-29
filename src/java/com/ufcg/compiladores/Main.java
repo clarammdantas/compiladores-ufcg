@@ -3,7 +3,6 @@ package com.ufcg.compiladores;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
-import com.ufcg.compiladores.generation.Generator;
 import com.ufcg.compiladores.generation.Program;
 
 public class Main {

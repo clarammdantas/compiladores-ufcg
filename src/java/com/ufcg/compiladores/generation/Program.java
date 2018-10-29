@@ -2,6 +2,8 @@ package com.ufcg.compiladores.generation;
 
 import java.util.List;
 
+import com.ufcg.compiladores.Generator;
+
 public class Program {
 	
 	List<Decl> decl;

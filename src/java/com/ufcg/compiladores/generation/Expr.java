@@ -1,5 +1,7 @@
 package com.ufcg.compiladores.generation;
 
+import com.ufcg.compiladores.Generator;
+
 public abstract class Expr {
 	
 	public String reg;
@@ -50,14 +52,14 @@ public abstract class Expr {
 		}
     }
     
-    public static IntegerLiteral integer(Integer val) {
-    	return new IntegerLiteral(val);
+    public static Literal literal(Integer val) {
+    	return new Literal(val);
     }
     
-    public static class IntegerLiteral extends Expr {
+    public static class Literal extends Expr {
     	public Integer val;
     	
-		public IntegerLiteral(Integer val) {
+		public Literal(Integer val) {
 			this.val = val;
 		}
 
