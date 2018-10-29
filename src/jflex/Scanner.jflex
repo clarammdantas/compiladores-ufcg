@@ -71,6 +71,9 @@ Identifier = [_a-zA-Z][_a-zA-Z0-9]*
 	"procedure"				{ return symbol(sym.PROCEDURE); }
 	"repeat"				{ return symbol(sym.REPEAT); }
 	"until"					{ return symbol(sym.UNTIL); }
+	"integer"				{ return symbol(sym.INT_TYPE); }
+	"boolean"				{ return symbol(sym.BOOLEAN_TYPE); }
+	"string"				{ return symbol(sym.STR_TYPE); }
 	
 	"array"					{ return symbol(sym.ARRAY); }
 	"of"					{ return symbol(sym.OF); }

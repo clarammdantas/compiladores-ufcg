@@ -1,14 +1,37 @@
 package com.ufcg.compiladores;
 
 import java_cup.runtime.*;
-
+import com.ufcg.compiladores.symbols.Symbol;
+import com.ufcg.compiladores.symbols.SymbolTable;
+import com.ufcg.compiladores.type.LiteralType;
 
 parser code {:
+
+	//private SymbolTable st = new SymbolTable();
+
+	public String sintArType(Object type1, Object type2) {
+		String s1 = (String)type1;
+		String s2 = (String)type2;
+
+		if (s1 == "integer" && s2 == "integer") {
+			return s1;
+		}
+		// add this error to error counter and add line
+		System.err.println("Syntar Error: expected integer type.");
+		return null;
+	}
+
+
+//	public void checkTypesAttr(Object id, Object type) {
+//		if ()
+//	}
+
 :};
 
 
 terminal PROGRAM, BEGIN, END, VAR, FUNCTION, PROCEDURE;
 terminal REPEAT, UNTIL;
+terminal INT_TYPE, BOOLEAN_TYPE, STR_TYPE;
 terminal EQ, NE, GT, LT, GE, LE, ADD, SUB, MUL, DIV, MOD, ASSIGN;
 terminal BOOLEAN, INTEGER, STRING, ARRAY, OF, RANGE;
 terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS, LEFT_BRACKET, RIGHT_BRACKET;
@@ -17,7 +40,7 @@ terminal IDENTIFIER;
 
 non terminal root, program, body;
 non terminal declarations, declaration, statements, statement;
-non terminal variables, variable, type, subscript, identifiers, literal, opt_init;
+non terminal variables, variable, type, type_id, subscript, identifiers, literal, opt_init;
 non terminal function, procedure, opt_params, params, param;
 non terminal repeat, attribuition, array, call, opt_arguments, arguments;
 non terminal expressions, expression, exp0, exp1, exp2, exp3, exp4;
@@ -26,7 +49,7 @@ start with root;
 
 root			::= program declarations body DOT;
 program			::= PROGRAM IDENTIFIER SEMICOLON;
-body			::= BEGIN statements END;
+body			::= BEGIN statements END; 
 
 declarations	::= declarations declaration
 				|	/* empty */;
@@ -41,9 +64,13 @@ variables		::= variables variable SEMICOLON
 variable		::= IDENTIFIER COMMA identifiers COLON type 
 				|	IDENTIFIER COLON type opt_init;
 
-type			::= IDENTIFIER
+type			::= type_id
 				|	ARRAY OF type
 				|	ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type;
+
+type_id			::= INT_TYPE
+				| BOOLEAN_TYPE
+				| STR_TYPE;
 
 subscript		::= IDENTIFIER
 				|	expression RANGE expression; // expressões devem ser constantes
@@ -53,7 +80,7 @@ opt_init		::= EQ expression // expressões devem ser constantes
 
 procedure		::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END;
 
-function		::= FUNCTION IDENTIFIER opt_params COLON IDENTIFIER SEMICOLON declarations BEGIN statements END;
+function		::= FUNCTION IDENTIFIER opt_params COLON type_id SEMICOLON declarations BEGIN statements END;
 
 opt_params		::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
 				|	LEFT_PARENTHESIS RIGHT_PARENTHESIS
@@ -62,17 +89,17 @@ opt_params		::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
 params			::= params SEMICOLON param
 				|	param;
 
-param			::= identifiers COLON IDENTIFIER
-				|	VAR identifiers COLON IDENTIFIER;
+param			::= identifiers COLON type_id
+				|	VAR identifiers COLON type_id;
 
 identifiers		::= identifiers COMMA IDENTIFIER
 				|	IDENTIFIER;
 
 array			::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
 
-literal			::= BOOLEAN
-				|	INTEGER:t 	      {: RESULT =  t; :} 
-				|	STRING;
+literal			::= BOOLEAN {: String t = "boolean"; RESULT = t; :}
+				|	INTEGER {: String t = "integer"; RESULT = t; :}
+				|	STRING 	{: String t = "string"; RESULT = t; :};
 
 statements		::= statements statement SEMICOLON
 				|	/* empty */;
@@ -89,13 +116,13 @@ opt_arguments	::= arguments
 arguments		::= arguments COMMA expression
 				|	expression;
 
-attribuition	::= IDENTIFIER ASSIGN expression
+attribuition	::= IDENTIFIER:id ASSIGN expression:t {: :}
 				|	array ASSIGN expression;
 
 expressions		::= expressions COMMA expression
 				|	expression;
 
-expression		::= exp0 {: System.out.println(RESULT); :};
+expression		::= exp0:t {: RESULT = t; :};
 
 exp0			::= exp0 EQ exp1
 				|	exp0 NE exp1
@@ -103,26 +130,26 @@ exp0			::= exp0 EQ exp1
 				|	exp0 LT exp1
 				|	exp0 GE exp1
 				|	exp0 LE exp1
-				|	exp1;
+				|	exp1:t  {: RESULT = t; :};
 	
-exp1			::= exp1:e1 ADD exp2:e2 {: RESULT = (int)e1 + (int)e2; :}
-				|	exp1 SUB exp2
-				|	exp2;
+exp1			::= exp1:t1 ADD exp2:t2 {: RESULT = sintArType(t1, t2); :}
+				|	exp1:t1 SUB exp2:t2 {: RESULT = sintArType(t1, t2); :}
+				|	exp2:t {: RESULT = t; :};
 	
-exp2			::= exp2 MUL exp3
-				|	exp2 DIV exp3
-				|	exp2 MOD exp3
-				|	exp3;
+exp2			::= exp2:t1 MUL exp3:t2 {: RESULT = sintArType(t1, t2); :}
+				|	exp2:t1 DIV exp3:t2 {: RESULT = sintArType(t1, t2); :}
+				|	exp2:t1 MOD exp3:t2 {: RESULT = sintArType(t1, t2); :}
+				|	exp3:t {: RESULT = t; :};
 	
-exp3			::= ADD exp3
-				|	SUB exp3
-				|	exp4;
+exp3			::= ADD exp3:t {: RESULT = t; :}
+				|	SUB exp3:t {: RESULT = t; :}
+				|	exp4:t {: RESULT = t; :};
 	
 exp4			::= IDENTIFIER
-				|	LEFT_PARENTHESIS exp0 RIGHT_PARENTHESIS
-				|	literal:e {: System.out.println("= " + e); RESULT = e.lexval(); :}
-				|	call
-				|	array;
+				|	LEFT_PARENTHESIS exp0:t RIGHT_PARENTHESIS {: RESULT = t; :}
+				|	literal:t {: RESULT = t; :}
+				|	call:t {: RESULT = t; :}
+				|	array:t {: RESULT = t; :};
 
 repeat			::= REPEAT statements UNTIL expression;
 	
