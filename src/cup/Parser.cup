@@ -44,8 +44,6 @@ parser code {:
 
 			LiteralType idType = SymbolTable.getSymbol(idAux);
 
-			System.out.println("id " + idAux);
-			System.out.println("id type " + t);
 			if (idType == null) {
 				sem_error(idAux, "Identifier not found");
 				Main.errors.increase();
@@ -53,6 +51,19 @@ parser code {:
 			else if (!idType.getName().equals(t.getName())) {
 				sem_error("Incompatible types");
 				Main.errors.increase();
+			}
+		}
+	}
+
+	public void mapTypes(Object il, Object id, Object t) {
+		List<String> idList = ((ArrayList<String>)il);
+		
+		if (id != null)
+			idList.add((String)id);
+
+		for (String curr_id : idList) {
+			if (!SymbolTable.addSymbol((String)curr_id, (LiteralType)t)) {
+				sem_error((String)curr_id, "duplicate name");
 			}
 		}
 	}
@@ -95,14 +106,7 @@ declaration		::= VAR variables
 variables		::= variables variable SEMICOLON
 				|	variable SEMICOLON;
 
-variable		::= IDENTIFIER:id COMMA identifiers:il COLON type:t {:  List<String> idList = ((ArrayList<String>)il);
-																		idList.add((String)id);
-																		for (String curr_id : idList) {
-																			if (!SymbolTable.addSymbol((String)curr_id, (LiteralType)t)) {
-																				parser.sem_error((String)id, "duplicate name");
-																			}
-																		}
-																	:}
+variable		::= IDENTIFIER:id COMMA identifiers:il COLON type:t {:  mapTypes(il, id, t); :}
 				|	IDENTIFIER:id COLON type:t opt_init {: 	if (!SymbolTable.addSymbol((String)id, (LiteralType)t)) {
 																parser.sem_error((String)id, "duplicate name");
 															} 
@@ -124,32 +128,32 @@ opt_init		::= EQ expression // expressões devem ser constantes
 
 procedure		::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END;
 
-function		::= FUNCTION IDENTIFIER:id opt_params:paramsList COLON type_id:t {: 
+function		::= FUNCTION IDENTIFIER:id opt_params:paramsList COLON type:t {: 
 							String functionId = (String)id;
 							
-							if (!SymbolTable.addSymbol(functionId, (FunctionType)t)) {
+							if (!SymbolTable.addSymbol(functionId, new FunctionType((LiteralType)t))) {
 								parser.sem_error(functionId, "duplicate name");
 							} else {
+								if (paramsList != null) {
+									FunctionType type = (FunctionType)SymbolTable.getSymbol(functionId);
+									type.addParams((ArrayList<LiteralType>) paramsList);
+								}
 								SymbolTable.push();
-							}
-							
-							if (functionId != null) {
-								FunctionType type = new FunctionType((LiteralType) t);
-								type.addParams((ArrayList<LiteralType>) paramsList);
-							}
-								
+							}	
 					:} SEMICOLON declarations BEGIN statements END;
 
 
-opt_params		::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
+opt_params		::= LEFT_PARENTHESIS params:paramsList RIGHT_PARENTHESIS {: RESULT = paramsList; :}
 				|	LEFT_PARENTHESIS RIGHT_PARENTHESIS
 				|	/* empty */;
 
-params			::= params SEMICOLON param
-				|	param;
+params			::= params:paramsList SEMICOLON param:t {: ((ArrayList<LiteralType>)paramsList).add((LiteralType)t); RESULT = paramsList; :}
+				|	param:t {: List<LiteralType> paramsList = new ArrayList<LiteralType>();
+   					 					paramsList.add((LiteralType)t);
+   					 					RESULT = paramsList;  :};
 
-param			::= identifiers COLON type_id
-				|	VAR identifiers COLON type_id;
+param			::= identifiers:il COLON type:t {: mapTypes(il, null, t); RESULT = t; :}
+				|	VAR identifiers:il COLON type:t {: mapTypes(il, null, t); RESULT = t; :};
 
 identifiers		::= identifiers:il COMMA IDENTIFIER:id {: ((ArrayList<String>)il).add(((String)id).toLowerCase()); RESULT = il; :}
 				|	IDENTIFIER:id 	{:  List<String> il = new ArrayList<String>();

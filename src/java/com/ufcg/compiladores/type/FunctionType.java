@@ -3,7 +3,7 @@ package com.ufcg.compiladores.type;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionType extends LiteralType{
+public class FunctionType extends LiteralType {
 	
 	private LiteralType returnType;
 	private List<LiteralType> paramsTypes;
