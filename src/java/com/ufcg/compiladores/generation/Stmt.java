@@ -34,7 +34,7 @@ public abstract class Stmt {
 	}
 	
 	public static class Repeat extends Stmt {
-		public String label;
+		public String l;
 		
 		public List<Stmt> s;
 		public Expr e;

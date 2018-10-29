@@ -8,6 +8,31 @@ public abstract class Expr {
 	
     public abstract void accept(Generator gen);
     
+    public static Relex relop(Expr e1, String op, Expr e2) {
+    	return new Relex(e1, op, e2);
+    }
+    
+    public static class Relex extends Expr {
+    	public String l1, l2;
+    	
+    	public Expr e1, e2;
+    	public String op;
+    	
+		public Relex(Expr e1, String op, Expr e2) {
+			this.e1 = e1;
+			this.e2 = e2;
+			this.op = op;
+		}
+
+		@Override
+		public void accept(Generator gen) {
+			if(gen.preVisit(this) == false) return;
+			e1.accept(gen);
+			e2.accept(gen);
+			gen.postVisit(this);
+		}
+    }
+    
     public static Binex binop(Expr e1, String op, Expr e2) {
     	return new Binex(e1, op, e2);
     }

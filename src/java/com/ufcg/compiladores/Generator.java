@@ -50,8 +50,8 @@ public class Generator {
 	}
 
 	public boolean preVisit(Stmt.Repeat r) {
-		r.label = Label.get();
-		writer.println(String.format("%s:", r.label));
+		r.l = Label.get();
+		writer.println(String.format("%s:", r.l));
 		return true;
 	}
 
@@ -59,8 +59,36 @@ public class Generator {
 		Temp.release();
 
 		writer.println(String.format("\tmov al, [%s]", r.e.reg));
-		writer.println(String.format("\tcmp al, 1"));
-		writer.println(String.format("\tjl %s\n", r.label));
+		writer.println(String.format("\tcmp al, 0"));
+		writer.println(String.format("\tje %s\n", r.l));
+	}
+
+	public boolean preVisit(Expr.Relex e) {
+		return true;
+	}
+
+	public void postVisit(Expr.Relex e) {
+		Temp.release(2);
+		e.reg = Temp.get();
+		
+		e.l1 = Label.get();
+		e.l2 = Label.get();
+		
+		writer.println(String.format("\tmov eax, [%s]", e.e1.reg));
+		writer.println(String.format("\tmov ebx, [%s]", e.e2.reg));
+		
+		writer.println(String.format("\tcmp eax, ebx"));
+		writer.println(String.format("\t%s %s", e.op, e.l1));
+
+		writer.println(String.format("\tmov eax, 0"));
+		writer.println(String.format("\tmov [%s], eax", e.reg));
+		writer.println(String.format("\tjmp %s", e.l2));
+		
+		writer.println(String.format("%s:", e.l1));
+		writer.println(String.format("\tmov eax, 1"));
+		writer.println(String.format("\tmov [%s], eax", e.reg));
+		
+		writer.println(String.format("%s:", e.l2));
 	}
 
 	public boolean preVisit(Expr.Binex e) {

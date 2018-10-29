@@ -2,6 +2,5 @@ program test;
 
 begin
 	repeat
-		a := 7 mod 2;
-	until false;
+	until 2 * 3 >= 7;
 end.

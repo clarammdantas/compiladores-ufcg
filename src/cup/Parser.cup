@@ -127,12 +127,12 @@ expressions		::= expressions COMMA expression
 
 expression		::= exp0:e {: RESULT = e; :};
 
-exp0			::= exp0 EQ exp1
-				|	exp0 NE exp1
-				|	exp0 GT exp1
-				|	exp0 LT exp1
-				|	exp0 GE exp1
-				|	exp0 LE exp1
+exp0			::= exp0:e1 EQ exp1:e2 {: RESULT = Expr.relop(e1, "je" , e2); :}
+				|	exp0:e1 NE exp1:e2 {: RESULT = Expr.relop(e1, "jne", e2); :}
+				|	exp0:e1 GT exp1:e2 {: RESULT = Expr.relop(e1, "jg" , e2); :}
+				|	exp0:e1 LT exp1:e2 {: RESULT = Expr.relop(e1, "jl" , e2); :}
+				|	exp0:e1 GE exp1:e2 {: RESULT = Expr.relop(e1, "jge", e2); :}
+				|	exp0:e1 LE exp1:e2 {: RESULT = Expr.relop(e1, "jle", e2); :}
 				|	exp1:e {: RESULT = e; :};
 	
 exp1			::= exp1:e1 ADD exp2:e2 {: RESULT = Expr.binop(e1, "add", e2); :}
