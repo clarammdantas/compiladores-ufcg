@@ -4,10 +4,14 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 
 public class Main {
+	
+	static Lexer lexer;
+	static ErrorCounter errors;
+	
 	public static void main(String[] args) throws FileNotFoundException {
-		ErrorCounter errors = new ErrorCounter();
+		errors = new ErrorCounter();
     	
-    	Lexer lexer = new Lexer(new FileReader("src/pascal/test.pas"), errors);
+    	lexer = new Lexer(new FileReader("src/pascal/test.pas"), errors);
         Parser p = new Parser(lexer);
         
         try {

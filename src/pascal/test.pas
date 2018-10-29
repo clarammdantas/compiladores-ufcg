@@ -1,10 +1,8 @@
 program test;
 
 var
-	a: integer;
-
+	a, b, c: integer;
+	d:boolean;
 begin
-	a := 1 - (1/2);
-	
-	b := 1+2;
+	a := 1 + true;
 end.

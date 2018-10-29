@@ -47,6 +47,16 @@ import java_cup.runtime.*;
 		if(code > 255) error("Illegal char constant");
 		string.append((char) code);
 	}
+	
+   public String current_lexeme(){
+    	int l = yyline+1;
+    	int c = yycolumn+1;
+    	return " (line: "+l+" , column: "+c+" , lexeme: '"+yytext()+"')";
+  	}
+  	
+  	public int current_line() {
+  		return yyline+1;
+  	}
 %}
 
 Whitespace = [ \r\n\t]

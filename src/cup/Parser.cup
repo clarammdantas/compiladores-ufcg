@@ -4,16 +4,17 @@ import java_cup.runtime.*;
 import com.ufcg.compiladores.symbols.Symbol;
 import com.ufcg.compiladores.symbols.SymbolTable;
 import com.ufcg.compiladores.type.LiteralType;
+import java.util.*;
 
 parser code {:
 
 	//private SymbolTable st = new SymbolTable();
 
-	public String sintArType(Object type1, Object type2) {
-		String s1 = (String)type1;
-		String s2 = (String)type2;
+	public LiteralType sintArType(Object type1, Object type2) {
+		LiteralType s1 = (LiteralType)type1;
+		LiteralType s2 = (LiteralType)type2;
 
-		if (s1 == "integer" && s2 == "integer") {
+		if (s1.getName() == "integer" && s2.getName() == "integer") {
 			return s1;
 		}
 		// add this error to error counter and add line
@@ -21,13 +22,44 @@ parser code {:
 		return null;
 	}
 
+	public void sem_error(String lexeme, String message) {
+		System.err.println("Error in line "+ Main.lexer.current_line() + " : Semantic error");
+      	System.err.println("==> " + message + ": "+ lexeme + "\n");
+		Main.errors.increase();
+  	}
+  	
+  	public void sem_error(String message) {
+		System.err.println("Error "+ Main.lexer.current_lexeme() + " : Semantic error");
+      	System.err.println("==> " + message +"\n");
+		Main.errors.increase();
+  	}
 
-//	public void checkTypesAttr(Object id, Object type) {
-//		if ()
-//	}
+
+	public void checkTypesAttr(Object id, Object type) {
+		if (type != null) {
+			String idAux = (String)id;
+			LiteralType t = (LiteralType)type;
+
+			LiteralType idType = SymbolTable.getSymbol(idAux);
+
+			System.out.println("id " + idAux);
+			System.out.println("id type " + t);
+			if (idType == null) {
+				sem_error(idAux, "Identifier not found");
+				Main.errors.increase();
+			}
+			else if (!idType.getName().equals(t.getName())) {
+				sem_error("Incompatible types");
+				Main.errors.increase();
+			}
+		}
+	}
 
 :};
 
+init with {:
+	SymbolTable.start();
+:};
 
 terminal PROGRAM, BEGIN, END, VAR, FUNCTION, PROCEDURE;
 terminal REPEAT, UNTIL;
@@ -61,16 +93,26 @@ declaration		::= VAR variables
 variables		::= variables variable SEMICOLON
 				|	variable SEMICOLON;
 
-variable		::= IDENTIFIER COMMA identifiers COLON type 
-				|	IDENTIFIER COLON type opt_init;
+variable		::= IDENTIFIER:id COMMA identifiers:il COLON type:t {:  List<String> idList = ((ArrayList<String>)il);
+																		idList.add((String)id);
+																		for (String curr_id : idList) {
+																			if (!SymbolTable.addSymbol((String)curr_id, (LiteralType)t)) {
+																				parser.sem_error((String)id, "duplicate name");
+																			}
+																		}
+																	:}
+				|	IDENTIFIER:id COLON type:t opt_init {: 	if (!SymbolTable.addSymbol((String)id, (LiteralType)t)) {
+																parser.sem_error((String)id, "duplicate name");
+															} 
+														:};
 
-type			::= type_id
+type			::= type_id:t {: RESULT = t; :}
 				|	ARRAY OF type
 				|	ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type;
 
-type_id			::= INT_TYPE
-				| BOOLEAN_TYPE
-				| STR_TYPE;
+type_id			::= INT_TYPE 	{: RESULT = new LiteralType("integer"); :}
+				| BOOLEAN_TYPE	{: RESULT = new LiteralType("boolean"); :}
+				| STR_TYPE		{: RESULT = new LiteralType("string");  :};	
 
 subscript		::= IDENTIFIER
 				|	expression RANGE expression; // expressões devem ser constantes
@@ -80,7 +122,8 @@ opt_init		::= EQ expression // expressões devem ser constantes
 
 procedure		::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END;
 
-function		::= FUNCTION IDENTIFIER opt_params COLON type_id SEMICOLON declarations BEGIN statements END;
+function		::= FUNCTION IDENTIFIER:id opt_params:paramsList COLON type_id:t SEMICOLON declarations BEGIN statements END;
+
 
 opt_params		::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
 				|	LEFT_PARENTHESIS RIGHT_PARENTHESIS
@@ -92,14 +135,17 @@ params			::= params SEMICOLON param
 param			::= identifiers COLON type_id
 				|	VAR identifiers COLON type_id;
 
-identifiers		::= identifiers COMMA IDENTIFIER
-				|	IDENTIFIER;
+identifiers		::= identifiers:il COMMA IDENTIFIER:id {: ((ArrayList<String>)il).add(((String)id).toLowerCase()); RESULT = il; :}
+				|	IDENTIFIER:id 	{:  List<String> il = new ArrayList<String>();
+   					 					il.add(((String)id).toLowerCase());
+   					 					RESULT = il; 
+									:};
 
 array			::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
 
-literal			::= BOOLEAN {: String t = "boolean"; RESULT = t; :}
-				|	INTEGER {: String t = "integer"; RESULT = t; :}
-				|	STRING 	{: String t = "string"; RESULT = t; :};
+literal			::= BOOLEAN {: LiteralType t = new LiteralType("boolean"); RESULT = t; :}
+				|	INTEGER {: LiteralType t = new LiteralType("integer"); RESULT = t; :}
+				|	STRING 	{: LiteralType t = new LiteralType("string"); RESULT = t; :};
 
 statements		::= statements statement SEMICOLON
 				|	/* empty */;
@@ -116,7 +162,7 @@ opt_arguments	::= arguments
 arguments		::= arguments COMMA expression
 				|	expression;
 
-attribuition	::= IDENTIFIER:id ASSIGN expression:t {: :}
+attribuition	::= IDENTIFIER:id ASSIGN expression:t {: checkTypesAttr(id, t); :}
 				|	array ASSIGN expression;
 
 expressions		::= expressions COMMA expression
@@ -124,12 +170,12 @@ expressions		::= expressions COMMA expression
 
 expression		::= exp0:t {: RESULT = t; :};
 
-exp0			::= exp0 EQ exp1
-				|	exp0 NE exp1
-				|	exp0 GT exp1
-				|	exp0 LT exp1
-				|	exp0 GE exp1
-				|	exp0 LE exp1
+exp0			::= exp0 EQ exp1 {: RESULT = new LiteralType("boolean"); :}
+				|	exp0 NE exp1 {: RESULT = new LiteralType("boolean"); :}
+				|	exp0 GT exp1 {: RESULT = new LiteralType("boolean"); :}
+				|	exp0 LT exp1 {: RESULT = new LiteralType("boolean"); :}
+				|	exp0 GE exp1 {: RESULT = new LiteralType("boolean"); :}
+				|	exp0 LE exp1 {: RESULT = new LiteralType("boolean"); :}
 				|	exp1:t  {: RESULT = t; :};
 	
 exp1			::= exp1:t1 ADD exp2:t2 {: RESULT = sintArType(t1, t2); :}
