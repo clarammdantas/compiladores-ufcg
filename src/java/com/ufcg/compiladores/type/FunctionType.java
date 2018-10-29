@@ -17,6 +17,10 @@ public class FunctionType extends LiteralType{
 	public LiteralType getReturnType() {
 		return this.returnType;
 	}
+		
+	public void setReturnType(LiteralType newReturnType) {
+		this.returnType = newReturnType;
+	}
 	
 	public List<LiteralType> getParamsTypes() {
 		return this.paramsTypes;
@@ -24,5 +28,9 @@ public class FunctionType extends LiteralType{
 	
 	public void addParam(LiteralType param) {
 		this.paramsTypes.add(param);
+	}
+	
+	public void addParams(List<LiteralType> type) {
+		this.paramsTypes.addAll(type);
 	}
 }

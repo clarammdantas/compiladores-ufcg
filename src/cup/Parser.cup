@@ -4,6 +4,7 @@ import java_cup.runtime.*;
 import com.ufcg.compiladores.symbols.Symbol;
 import com.ufcg.compiladores.symbols.SymbolTable;
 import com.ufcg.compiladores.type.LiteralType;
+import com.ufcg.compiladores.type.FunctionType;
 import java.util.*;
 
 parser code {:
@@ -19,6 +20,7 @@ parser code {:
 		}
 		// add this error to error counter and add line
 		System.err.println("Syntar Error: expected integer type.");
+		Main.errors.increase();
 		return null;
 	}
 
@@ -87,7 +89,7 @@ declarations	::= declarations declaration
 				|	/* empty */;
 
 declaration		::= VAR variables
-				|	function SEMICOLON
+				|	function SEMICOLON {: SymbolTable.pop(); :}
 				|	procedure SEMICOLON;
 
 variables		::= variables variable SEMICOLON
@@ -122,7 +124,21 @@ opt_init		::= EQ expression // expressões devem ser constantes
 
 procedure		::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END;
 
-function		::= FUNCTION IDENTIFIER:id opt_params:paramsList COLON type_id:t SEMICOLON declarations BEGIN statements END;
+function		::= FUNCTION IDENTIFIER:id opt_params:paramsList COLON type_id:t {: 
+							String functionId = (String)id;
+							
+							if (!SymbolTable.addSymbol(functionId, (FunctionType)t)) {
+								parser.sem_error(functionId, "duplicate name");
+							} else {
+								SymbolTable.push();
+							}
+							
+							if (functionId != null) {
+								FunctionType type = new FunctionType((LiteralType) t);
+								type.addParams((ArrayList<LiteralType>) paramsList);
+							}
+								
+					:} SEMICOLON declarations BEGIN statements END;
 
 
 opt_params		::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
