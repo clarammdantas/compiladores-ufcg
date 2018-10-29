@@ -1,6 +1,8 @@
 package com.ufcg.compiladores;
 
+import java.util.*;
 import java_cup.runtime.*;
+import com.ufcg.compiladores.generation.*;
 
 action code {:
 :}
@@ -20,27 +22,36 @@ parser code {:
 :};
 
 
-terminal PROGRAM, BEGIN, END, VAR, FUNCTION, PROCEDURE;
-terminal REPEAT, UNTIL;
+terminal PROGRAM, BEGIN, END, VAR, FUNCTION, PROCEDURE, REPEAT, UNTIL;
 terminal EQ, NE, GT, LT, GE, LE, ADD, SUB, MUL, DIV, MOD, ASSIGN;
-terminal BOOLEAN, INTEGER, STRING, ARRAY, OF, RANGE;
+terminal ARRAY, OF, RANGE;
 terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS, LEFT_BRACKET, RIGHT_BRACKET;
 terminal COMMA, COLON, SEMICOLON, DOT;
-terminal IDENTIFIER;
 
-non terminal root, program, body;
-non terminal declarations, declaration, statements, statement;
-non terminal variables, variable, type, subscript, identifiers, literal, opt_init;
+terminal Boolean	BOOLEAN;
+terminal Integer	INTEGER;
+terminal String		STRING, IDENTIFIER;
+
+non terminal Program		root;
+non terminal List<Decl>		declarations;
+non terminal Decl			declaration;
+non terminal List<Stmt>		statements, body;
+non terminal Stmt			statement, repeat, assign;
+non terminal List<Expr>		expressions;
+non terminal Expr			expression, exp0, exp1, exp2, exp3, exp4, literal;
+
+non terminal program;
+non terminal variables, variable, type, subscript, identifiers, opt_init;
 non terminal function, procedure, opt_params, params, param;
-non terminal repeat, attribuition, array, call, opt_arguments, arguments;
-non terminal expressions, expression, exp0, exp1, exp2, exp3, exp4;
+non terminal array, call, opt_arguments, arguments;
 
 start with root;
 
-root			::= program declarations body DOT;
+root			::= program declarations:d body:b DOT {: RESULT = new Program(d, b); :};
+
 program			::= PROGRAM IDENTIFIER SEMICOLON;
 
-body			::= BEGIN statements END
+body			::= BEGIN statements:s END {: RESULT = s; :}
 				|	BEGIN statements error END;
 
 declarations	::= declarations declaration
@@ -89,13 +100,13 @@ identifiers		::= identifiers COMMA IDENTIFIER
 array			::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
 
 literal			::= BOOLEAN
-				|	INTEGER
+				|	INTEGER:i {: RESULT = Expr.integer(i); :}
 				|	STRING;
 
-statements		::= statements statement SEMICOLON
-				|	/* empty */;
+statements		::= statements:l statement:s SEMICOLON {: l.add(s); RESULT = l; :}
+				|	/* empty */ {: RESULT = new ArrayList<Stmt>(); :};
 
-statement		::= attribuition
+statement		::= assign:a {: RESULT = a; :}
 				|	call
 				|	repeat
 				|	error;
@@ -108,13 +119,13 @@ opt_arguments	::= arguments
 arguments		::= arguments COMMA expression
 				|	expression;
 
-attribuition	::= IDENTIFIER ASSIGN expression
+assign			::= IDENTIFIER:id ASSIGN expression:e {: RESULT = Stmt.assign(id, e); :}
 				|	array ASSIGN expression;
 
 expressions		::= expressions COMMA expression
 				|	expression;
 
-expression		::= exp0;
+expression		::= exp0:e {: RESULT = e; :};
 
 exp0			::= exp0 EQ exp1
 				|	exp0 NE exp1
@@ -122,24 +133,24 @@ exp0			::= exp0 EQ exp1
 				|	exp0 LT exp1
 				|	exp0 GE exp1
 				|	exp0 LE exp1
-				|	exp1;
+				|	exp1:e {: RESULT = e; :};
 	
-exp1			::= exp1 ADD exp2
-				|	exp1 SUB exp2
-				|	exp2;
+exp1			::= exp1:e1 ADD exp2:e2 {: RESULT = Expr.binop(e1, "add", e2); :}
+				|	exp1:e1 SUB exp2:e2 {: RESULT = Expr.binop(e1, "sub", e2); :}
+				|	exp2:e {: RESULT = e; :};
 	
-exp2			::= exp2 MUL exp3
-				|	exp2 DIV exp3
-				|	exp2 MOD exp3
-				|	exp3;
+exp2			::= exp2:e1 MUL exp3:e2 {: RESULT = Expr.binop(e1, "mul", e2); :}
+				|	exp2:e1 DIV exp3:e2 {: RESULT = Expr.binop(e1, "div", e2); :}
+				|	exp2:e1 MOD exp3:e2 {: RESULT = Expr.binop(e1, "mod", e2); :}
+				|	exp3:e {: RESULT = e; :};
 	
-exp3			::= ADD exp3
-				|	SUB exp3
-				|	exp4;
+exp3			::= ADD exp3:e {: RESULT = e; :}
+				|	SUB exp3:e {: RESULT = Expr.unop("neg", e); :}
+				|	exp4:e {: RESULT = e; :};
 	
 exp4			::= IDENTIFIER
-				|	LEFT_PARENTHESIS exp0 RIGHT_PARENTHESIS
-				|	literal
+				|	LEFT_PARENTHESIS exp0:e RIGHT_PARENTHESIS {: RESULT = e; :}
+				|	literal:l {: RESULT = l; :}
 				|	call
 				|	array;
 

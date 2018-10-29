@@ -2,7 +2,8 @@
   <property name="cup"      location="src/cup"      />
   <property name="jflex"    location="src/jflex"    />
   <property name="java"     location="src/java"     />
-  <property name="gen"      location="target"       />
+  <property name="out"      location="target/java"  />
+  <property name="asm"      location="target/asm"   />
   <property name="classes"  location="bin"          />
   <property name="lib"      location="lib"          />
   <property name="tools"    location="tools"        />
@@ -11,8 +12,9 @@
   <taskdef  name="cup"   classname="java_cup.anttask.CUPTask"  classpath="${tools}/java-cup-11b.jar"  />
 
   <target name="generate">
-    <jflex  file="${jflex}/Scanner.jflex" destdir="${gen}" />
-    <cup srcfile="${cup}/Parser.cup"      destdir="${gen}"
+    <mkdir dir="${asm}" />
+    <jflex  file="${jflex}/Scanner.jflex" destdir="${out}" />
+    <cup srcfile="${cup}/Parser.cup"      destdir="${out}"
           parser="Parser"                 interface="true" locations="false" />
   </target>
 
@@ -21,11 +23,12 @@
 
   <target name="compile" depends="generate">
     <mkdir dir="${classes}" />
-    <javac srcdir="${java}; ${gen}" destdir="${classes}" > <classpath refid="libraries" /> </javac>
+    <javac srcdir="${java}; ${out}" destdir="${classes}" > <classpath refid="libraries" /> </javac>
   </target>
 
   <target name="clean">
     <delete dir="${classes}" />
-    <delete dir="${gen}" />
+    <delete dir="${out}" />
+    <delete dir="${asm}" />
   </target>
 </project>

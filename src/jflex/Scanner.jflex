@@ -45,7 +45,6 @@ import java_cup.runtime.*;
 Whitespace		= [ \r\n\t]
 LineTerminator	= \r|\n|\r\n
 
-Boolean			= "true" | "false"
 Integer			= [0-9]+
 String			= [^\r\n\']+
 
@@ -95,7 +94,8 @@ Invalid			= [0-9]+[_a-zA-Z][_a-zA-Z0-9]*
 	
 	":="					{ return symbol(sym.ASSIGN); }
 	
-	{Boolean}				{ return symbol(sym.BOOLEAN, yytext()); }
+	"true"					{ return symbol(sym.BOOLEAN, true); }
+	"false"					{ return symbol(sym.BOOLEAN, false); }
 	{Integer}				{ return symbol(sym.INTEGER, Integer.parseInt(yytext())); }
 	
 	\'						{ yybegin(STRING); string.setLength(0); }
