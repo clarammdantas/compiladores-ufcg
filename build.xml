@@ -15,7 +15,7 @@
     <mkdir dir="${asm}" />
     <jflex  file="${jflex}/Scanner.jflex" destdir="${out}" />
     <cup srcfile="${cup}/Parser.cup"      destdir="${out}"
-          parser="Parser"                 interface="true" locations="false" />
+          parser="Parser"                 interface="true" locations="true" />
   </target>
 
 

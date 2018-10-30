@@ -1,7 +1,10 @@
 package com.ufcg.compiladores;
 
 import java.util.*;
+
 import java_cup.runtime.*;
+import java_cup.runtime.ComplexSymbolFactory.*;
+
 import com.ufcg.compiladores.generation.*;
 
 action code {:
@@ -14,10 +17,11 @@ parser code {:
 	}
 
 	@Override
-	public void syntax_error(Symbol cur_token) {
-		ErrorCounter.increase();
-		String output = String.format("(%d,%d) Error: Illegal syntax\n", cur_token.left+1, cur_token.right+1);
-		report_error(output, null);
+	public void syntax_error(Symbol token) {
+		ComplexSymbol complex = (ComplexSymbol) token;
+
+		Log.focus(complex.xleft);
+		Log.error("Illegal syntax");
 	}
 :};
 
@@ -32,43 +36,45 @@ terminal ARRAY, OF, RANGE;
 terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS, LEFT_BRACKET, RIGHT_BRACKET;
 terminal COMMA, COLON, SEMICOLON, DOT;
 
-non terminal Program		root;
-non terminal List<Decl>		declarations;
-non terminal Decl			declaration;
+non terminal Root			root;
+non terminal Block			block;
+non terminal List<Decl>		declarations, variables, variable;
+non terminal Decl			declaration, procedure, function;
 non terminal List<Stmt>		statements, body;
 non terminal Stmt			statement, repeat, assign;
-non terminal List<Expr>		expressions;
-non terminal Expr			expression, exp0, exp1, exp2, exp3, exp4, literal;
+non terminal List<Expr>		expressions, opt_arguments, arguments;
+non terminal Expr			expression, exp0, exp1, exp2, exp3, exp4, literal, opt_init, call;
 
-non terminal program;
-non terminal variables, variable, type, subscript, identifiers, opt_init;
-non terminal function, procedure, opt_params, params, param;
-non terminal array, call, opt_arguments, arguments;
+non terminal Type			type;
+non terminal List<Type>		opt_params, params, param;
+non terminal List<Token>	identifiers;
+
+non terminal subscript;
+non terminal array;
 
 start with root;
 
-root			::= program declarations:d body:b DOT {: RESULT = new Program(d, b); :};
+root			::= PROGRAM IDENTIFIER SEMICOLON {: Scope.push(); :} block:b DOT {: Scope.pop(); RESULT = new Root(b); :};
 
-program			::= PROGRAM IDENTIFIER SEMICOLON;
+block			::= declarations:d body:b {: RESULT = new Block(d, b); :};
 
 body			::= BEGIN statements:s END {: RESULT = s; :}
 				|	BEGIN statements error END;
 
-declarations	::= declarations declaration
-				|	/* empty */;
+declarations	::= declarations:l declaration:d {: l.add(d); RESULT = l; :}
+				|	/* empty */ {: RESULT = new ArrayList<>(); :};
 
-declaration		::= VAR variables
+declaration		::= VAR variables {: RESULT = Decl.noop; :}
 				|	function SEMICOLON
-				|	procedure SEMICOLON
-				|	error;
+				|	procedure:p SEMICOLON {: RESULT = p; :};
 
 variables		::= variables variable SEMICOLON
 				|	variable SEMICOLON;
 
-variable		::= IDENTIFIER COMMA identifiers COLON type
-				|	IDENTIFIER COLON type opt_init;
+variable		::= identifiers:l COMMA IDENTIFIER:id COLON type:t {: for(Token token : l) { Log.focus(token.loc); Scope.add(token.name, t, Ref.var); } Log.focus(idxleft); Scope.add(id, t, Ref.var); :}
+				|	IDENTIFIER:id COLON type:t opt_init:e {: Log.focus(idxleft); Scope.add(id, t, Ref.var); :}; // TODO
 
-type			::= IDENTIFIER
+type			::= IDENTIFIER:id {: Log.focus(idxleft); RESULT = Type.translate(id); :}
 				|	ARRAY OF type
 				|	ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type;
 
@@ -78,48 +84,48 @@ subscript		::= IDENTIFIER
 opt_init		::= EQ expression // expressões devem ser constantes
 				|	/* empty */;
 
-procedure		::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations body
+procedure		::= PROCEDURE IDENTIFIER:id {: Log.focus(idxleft); Scope.add(id, null, Ref.lab); Scope.push(); Ref.var.save(); :} opt_params:p {: Scope.get(id).t = new Type.Call(p); :} SEMICOLON block:b {: Scope.pop(); RESULT = new Decl.Procedure(id, p, b); :}
 				|	PROCEDURE error END;
 
-function		::= FUNCTION IDENTIFIER opt_params COLON IDENTIFIER SEMICOLON declarations body
+function		::= FUNCTION IDENTIFIER opt_params COLON IDENTIFIER SEMICOLON {: Scope.push(); :} block {: Scope.pop(); :}
 				|	FUNCTION error END;
 
-opt_params		::= LEFT_PARENTHESIS params RIGHT_PARENTHESIS
-				|	LEFT_PARENTHESIS RIGHT_PARENTHESIS
-				|	/* empty */;
+opt_params		::= LEFT_PARENTHESIS params:p RIGHT_PARENTHESIS {: RESULT = p; :}
+				|	LEFT_PARENTHESIS RIGHT_PARENTHESIS {: RESULT = new ArrayList<>(); :}
+				|	/* empty */ {: RESULT = new ArrayList<>(); :};
 
-params			::= params SEMICOLON param
-				|	param;
+params			::= params:l SEMICOLON param:p {: RESULT = l; RESULT.addAll(p); :}
+				|	param:p {: RESULT = p; :};
 
-param			::= identifiers COLON IDENTIFIER
+param			::= identifiers:l COLON IDENTIFIER:id {: Log.focus(idxleft); Type t = Type.translate(id); RESULT = new ArrayList<>(); for(Token token : l) { Scope.overwrite(token.name, t, Ref.var); RESULT.add(t); } :}
 				|	VAR identifiers COLON IDENTIFIER;
 
-identifiers		::= identifiers COMMA IDENTIFIER
-				|	IDENTIFIER;
+identifiers		::= identifiers:l COMMA IDENTIFIER:id {: Token token = new Token(id, idxleft); l.add(token); RESULT = l; :}
+				|	IDENTIFIER:id {: RESULT = new ArrayList<>(); Token token = new Token(id, idxleft); RESULT.add(token); :};
 
 array			::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
 
-literal			::= BOOLEAN:b {: RESULT = Expr.literal(b ? 1 : 0); :}
-				|	INTEGER:i {: RESULT = Expr.literal(i); :}
+literal			::= BOOLEAN:b {: RESULT = new Expr.Literal(Type.Boolean, b? 1 : 0); :}
+				|	INTEGER:i {: RESULT = new Expr.Literal(Type.Integer, i); :}
 				|	STRING;
 
 statements		::= statements:l statement:s SEMICOLON {: l.add(s); RESULT = l; :}
-				|	/* empty */ {: RESULT = new ArrayList<Stmt>(); :};
+				|	/* empty */ {: RESULT = new ArrayList<>(); :};
 
 statement		::= assign:a {: RESULT = a; :}
-				|	call
 				|	repeat:r {: RESULT = r; :}
+				|	call:c {: RESULT = new Stmt.Call(c); :}
 				|	error;
 
-call			::= IDENTIFIER LEFT_PARENTHESIS opt_arguments RIGHT_PARENTHESIS;
+call			::= IDENTIFIER:id LEFT_PARENTHESIS opt_arguments:a RIGHT_PARENTHESIS {: Log.focus(idxleft); RESULT = new Expr.Call(Scope.get(id), a); :};
 
-opt_arguments	::= arguments
-				|	/* empty */;
+opt_arguments	::= arguments:l {: RESULT = l; :}
+				|	/* empty */ {: RESULT = new ArrayList<>(); :};
 
-arguments		::= arguments COMMA expression
-				|	expression;
+arguments		::= arguments:l COMMA expression:e {: l.add(e); RESULT = l; :}
+				|	expression:e {: RESULT = new ArrayList<>(); RESULT.add(e); :};
 
-assign			::= IDENTIFIER:id ASSIGN expression:e {: RESULT = Stmt.assign(id, e); :}
+assign			::= IDENTIFIER:id ASSIGN expression:e {: Log.focus(idxleft); RESULT = new Stmt.Assign(Scope.get(id), e); :}
 				|	array ASSIGN expression;
 
 expressions		::= expressions COMMA expression
@@ -127,32 +133,32 @@ expressions		::= expressions COMMA expression
 
 expression		::= exp0:e {: RESULT = e; :};
 
-exp0			::= exp0:e1 EQ exp1:e2 {: RESULT = Expr.relop(e1, "je" , e2); :}
-				|	exp0:e1 NE exp1:e2 {: RESULT = Expr.relop(e1, "jne", e2); :}
-				|	exp0:e1 GT exp1:e2 {: RESULT = Expr.relop(e1, "jg" , e2); :}
-				|	exp0:e1 LT exp1:e2 {: RESULT = Expr.relop(e1, "jl" , e2); :}
-				|	exp0:e1 GE exp1:e2 {: RESULT = Expr.relop(e1, "jge", e2); :}
-				|	exp0:e1 LE exp1:e2 {: RESULT = Expr.relop(e1, "jle", e2); :}
+exp0			::= exp0:e1 EQ:op exp1:e2 {: Log.focus(opxleft); RESULT = new Expr.Relop(e1, "je" , e2); :}
+				|	exp0:e1 NE:op exp1:e2 {: Log.focus(opxleft); RESULT = new Expr.Relop(e1, "jne", e2); :}
+				|	exp0:e1 GT:op exp1:e2 {: Log.focus(opxleft); RESULT = new Expr.Relop(e1, "jg" , e2); :}
+				|	exp0:e1 LT:op exp1:e2 {: Log.focus(opxleft); RESULT = new Expr.Relop(e1, "jl" , e2); :}
+				|	exp0:e1 GE:op exp1:e2 {: Log.focus(opxleft); RESULT = new Expr.Relop(e1, "jge", e2); :}
+				|	exp0:e1 LE:op exp1:e2 {: Log.focus(opxleft); RESULT = new Expr.Relop(e1, "jle", e2); :}
 				|	exp1:e {: RESULT = e; :};
 	
-exp1			::= exp1:e1 ADD exp2:e2 {: RESULT = Expr.binop(e1, "add", e2); :}
-				|	exp1:e1 SUB exp2:e2 {: RESULT = Expr.binop(e1, "sub", e2); :}
+exp1			::= exp1:e1 ADD:op exp2:e2 {: Log.focus(opxleft); RESULT = new Expr.Binop(e1, "add", e2); :}
+				|	exp1:e1 SUB:op exp2:e2 {: Log.focus(opxleft); RESULT = new Expr.Binop(e1, "sub", e2); :}
 				|	exp2:e {: RESULT = e; :};
 	
-exp2			::= exp2:e1 MUL exp3:e2 {: RESULT = Expr.binop(e1, "mul", e2); :}
-				|	exp2:e1 DIV exp3:e2 {: RESULT = Expr.binop(e1, "div", e2); :}
-				|	exp2:e1 MOD exp3:e2 {: RESULT = Expr.binop(e1, "mod", e2); :}
+exp2			::= exp2:e1 MUL:op exp3:e2 {: Log.focus(opxleft); RESULT = new Expr.Binop(e1, "mul", e2); :}
+				|	exp2:e1 DIV:op exp3:e2 {: Log.focus(opxleft); RESULT = new Expr.Binop(e1, "div", e2); :}
+				|	exp2:e1 MOD:op exp3:e2 {: Log.focus(opxleft); RESULT = new Expr.Binop(e1, "mod", e2); :}
 				|	exp3:e {: RESULT = e; :};
 	
-exp3			::= ADD exp3:e {: RESULT = e; :}
-				|	SUB exp3:e {: RESULT = Expr.unop("neg", e); :}
+exp3			::= ADD:op exp3:e {: Log.focus(opxleft); RESULT = e; :}
+				|	SUB:op exp3:e {: Log.focus(opxleft); RESULT = new Expr.Unop("neg", e); :}
 				|	exp4:e {: RESULT = e; :};
 	
-exp4			::= IDENTIFIER
+exp4			::= IDENTIFIER:id {: Log.focus(idxleft); RESULT = new Expr.Identifier(Scope.get(id)); :}
 				|	LEFT_PARENTHESIS exp0:e RIGHT_PARENTHESIS {: RESULT = e; :}
 				|	literal:l {: RESULT = l; :}
 				|	call
 				|	array;
 
-repeat			::= REPEAT statements:s UNTIL expression:e {: RESULT = Stmt.repeat(s, e); :};
+repeat			::= REPEAT statements:s UNTIL expression:e {: Log.focus(exleft); RESULT = new Stmt.Repeat(s, e); :};
 	

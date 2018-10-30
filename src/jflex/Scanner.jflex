@@ -1,7 +1,7 @@
 package com.ufcg.compiladores;
 
 import java_cup.runtime.*;
-
+import java_cup.runtime.ComplexSymbolFactory.*;
 
 %%
 
@@ -13,26 +13,35 @@ import java_cup.runtime.*;
 %column
 
 %{
+    ComplexSymbolFactory symbolFactory;
 	StringBuilder string = new StringBuilder();
-
-	private Symbol symbol(int type) {
-		return new Symbol(type, yyline, yycolumn);
-	}
 	
+	public Lexer(java.io.Reader in, ComplexSymbolFactory sf) {
+		this(in);
+		symbolFactory = sf;
+    }
+    
+    private Symbol symbol(int type) {
+		return symbol(type, null);
+	}
+
 	private Symbol symbol(int type, Object value) {
-		return new Symbol(type, yyline, yycolumn, value);
+		String name = sym.terminalNames[type];
+		
+		Location left = new Location(yyline, yycolumn, yychar);
+		Location right = new Location(yyline, yycolumn + yylength(), yychar + yylength());
+		
+		return symbolFactory.newSymbol(name, type, left, right, value);
 	}
 	
 	private void error(String message) {
-		ErrorCounter.increase();
-		String output = String.format("(%d,%d) Error: %s", yyline+1, yycolumn+1, message);
-		System.err.println(output);
+		Log.focus(yyline, yycolumn);
+		Log.error(message);
 	}
 	
 	private void fatal(String message) {
-		String output = String.format("(%d,%d) Fatal: %s", yyline+1, yycolumn+1, message);
-		System.err.println(output);
-		System.exit(1);
+		Log.focus(yyline, yycolumn);
+		Log.fatal(message);
 	}
 	
 	private void parseEscape() {
@@ -41,6 +50,14 @@ import java_cup.runtime.*;
 		string.append((char) code);
 	}
 %}
+
+%eofval{
+	Location left = new Location(yyline, yycolumn, yychar);
+	Location right = new Location(yyline, yycolumn, yychar + 1);
+	
+	return symbolFactory.newSymbol("EOF", sym.EOF, left, right);
+%eofval}
+
 
 Whitespace		= [ \r\n\t]
 LineTerminator	= \r|\n|\r\n

@@ -1,6 +1,10 @@
 program test;
 
+procedure f(x: integer);
 begin
-	repeat
-	until -1 * 2 - (3 + 4 / 5) mod 6 < 7;
+	f(x + 1, 0);
+end;
+
+begin
+	f(0);
 end.

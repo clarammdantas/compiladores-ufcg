@@ -1,27 +1,30 @@
 package com.ufcg.compiladores;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 
-import com.ufcg.compiladores.generation.Program;
+import com.ufcg.compiladores.generation.*;
+
+import java_cup.runtime.*;
 
 public class Main {
 	public static void main(String[] args) throws FileNotFoundException {
-		
-		Lexer lexer = new Lexer(new FileReader("src/pascal/program.pas"));
-		Parser p = new Parser(lexer);
+	    ComplexSymbolFactory csf = new ComplexSymbolFactory();
+	    BufferedReader reader = new BufferedReader(new FileReader("src/pascal/program.pas"));
+	    
+	    ScannerBuffer lexer = new ScannerBuffer(new Lexer(reader, csf));
+		Parser p = new Parser(lexer, csf);
 		
 		try {
-			Program result = (Program) p.parse().value;
+			Root result = (Root) p.parse().value;
 
-			if(ErrorCounter.get() == 0) {
+			if(Log.size() == 0) {
 				Generator gen = new Generator("target/asm/program.asm");
 				result.accept(gen);
 				gen.flush();
 			}
 			
 			else {
-				String output = String.format("There were %d errors compiling module", ErrorCounter.get());
+				String output = String.format("There were %d errors compiling module", Log.size());
 				System.err.println(output);
 			}
 		}

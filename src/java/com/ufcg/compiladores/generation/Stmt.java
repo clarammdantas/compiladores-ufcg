@@ -1,53 +1,79 @@
 package com.ufcg.compiladores.generation;
 
-import java.util.List;
+import java.util.*;
 
-import com.ufcg.compiladores.Generator;
+import com.ufcg.compiladores.*;
 
-public abstract class Stmt {
-
-	protected abstract void accept(Generator gen);
-	
-	public static Assign assign(String id, Expr e) {
-		return new Assign(id, e);
-	}
+public abstract class Stmt implements Generator.Visitable {
 	
 	public static class Assign extends Stmt {
-		public String id;
+		public Scope.Instance i;
 		public Expr e;
 		
-		public Assign(String id, Expr e) {
-			this.id = id;
+		public Assign(Scope.Instance i, Expr e) {
+			this.i = i;
 			this.e = e;
+			
+			if(i != null) {
+				switch (i.t.check(e.t)) {
+				case ERROR:
+					String message = String.format("Incompatible types \"%s\" and \"%s\"", i.t, e.t);
+					Log.error(message);
+					break;
+					
+				default:
+					break;
+				}
+			}
 		}
 
 		@Override
-		protected void accept(Generator gen) {
+		public void accept(Generator gen) {
 			if(gen.preVisit(this) == false) return;
 			e.accept(gen);
 			gen.postVisit(this);
 		}
 	}
 	
-	public static Repeat repeat(List<Stmt> s, Expr e) {
-		return new Repeat(s, e);
+	public static class Call extends Stmt {
+		public Expr c;
+		
+		public Call(Expr c) {
+			this.c = c;
+		}
+
+		@Override
+		public void accept(Generator gen) {
+			c.accept(gen);
+		}
 	}
 	
 	public static class Repeat extends Stmt {
-		public String l;
 		
 		public List<Stmt> s;
 		public Expr e;
 		
+		public String l = Ref.lab.get();
+		
 		public Repeat(List<Stmt> s, Expr e) {
 			this.s = s;
 			this.e = e;
+
+			switch (Type.Boolean.check(e.t))
+			{
+			case ERROR:
+				Log.error("Expected a Boolean expression");
+				break;
+
+			default:
+				break;
+			}
 		}
 
 		@Override
-		protected void accept(Generator gen) {
+		public void accept(Generator gen) {
 			if(gen.preVisit(this) == false) return;
-			for(int i=0; i < s.size(); ++i) s.get(i).accept(gen);
+			for(Stmt stmt : s) stmt.accept(gen);
 			e.accept(gen);
 			gen.postVisit(this);
 		}
