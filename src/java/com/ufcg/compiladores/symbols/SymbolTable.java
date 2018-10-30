@@ -43,6 +43,7 @@ public class SymbolTable {
 	}
 	
 	public static void pop() {
-		currentScope = currentScope.previousScope;
+		if (currentScope.previousScope != null)
+			currentScope = currentScope.previousScope;
 	}
 }

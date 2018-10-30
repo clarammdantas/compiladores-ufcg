@@ -11,7 +11,7 @@ public class Main {
 	public static void main(String[] args) throws FileNotFoundException {
 		errors = new ErrorCounter();
     	
-    	lexer = new Lexer(new FileReader("src/pascal/test.pas"), errors);
+    	lexer = new Lexer(new FileReader("src/pascal/program.pas"), errors);
         Parser p = new Parser(lexer);
         
         try {

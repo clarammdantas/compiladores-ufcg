@@ -4,23 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class FunctionType extends LiteralType {
+public class ProcedureType extends LiteralType {
 	
-	private LiteralType returnType;
 	private List<LiteralType> paramsTypes;
+	private final static String PROC_TYPE_NAME = "procedure_type"; 
 	
-	public FunctionType(LiteralType returnType) {
-		super(returnType.getName());
-		this.returnType = returnType;
+	public ProcedureType() {
+		super(PROC_TYPE_NAME);
 		this.paramsTypes = new ArrayList<>();
-	}
-	
-	public LiteralType getReturnType() {
-		return this.returnType;
-	}
-		
-	public void setReturnType(LiteralType newReturnType) {
-		this.returnType = newReturnType;
 	}
 	
 	public List<LiteralType> getParamsTypes() {

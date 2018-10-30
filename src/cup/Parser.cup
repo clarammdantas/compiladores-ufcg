@@ -5,6 +5,7 @@ import com.ufcg.compiladores.symbols.Symbol;
 import com.ufcg.compiladores.symbols.SymbolTable;
 import com.ufcg.compiladores.type.LiteralType;
 import com.ufcg.compiladores.type.FunctionType;
+import com.ufcg.compiladores.type.ProcedureType;
 import java.util.*;
 
 parser code {:
@@ -19,7 +20,7 @@ parser code {:
 			return s1;
 		}
 		// add this error to error counter and add line
-		System.err.println("Syntar Error: expected integer type.");
+		System.err.println("Syntar Error: expected type does not match.");
 		Main.errors.increase();
 		return null;
 	}
@@ -57,9 +58,10 @@ parser code {:
 
 	public void mapTypes(Object il, Object id, Object t) {
 		List<String> idList = ((ArrayList<String>)il);
-		
-		if (id != null)
+
+		if (id != null) {
 			idList.add((String)id);
+		}
 
 		for (String curr_id : idList) {
 			if (!SymbolTable.addSymbol((String)curr_id, (LiteralType)t)) {
@@ -100,8 +102,8 @@ declarations	::= declarations declaration
 				|	/* empty */;
 
 declaration		::= VAR variables
-				|	function SEMICOLON {: SymbolTable.pop(); :}
-				|	procedure SEMICOLON;
+				|	function SEMICOLON 	{: SymbolTable.pop(); :}
+				|	procedure SEMICOLON {: SymbolTable.pop(); :};
 
 variables		::= variables variable SEMICOLON
 				|	variable SEMICOLON;
@@ -126,7 +128,19 @@ subscript		::= IDENTIFIER
 opt_init		::= EQ expression // expressões devem ser constantes
 				|	/* empty */;
 
-procedure		::= PROCEDURE IDENTIFIER opt_params SEMICOLON declarations BEGIN statements END;
+procedure		::= PROCEDURE IDENTIFIER:id opt_params:paramsList {: 
+							String procedureId = (String)id;
+							
+							if (!SymbolTable.addSymbol(procedureId, new ProcedureType())) {
+								parser.sem_error(procedureId, "duplicate name");
+							} else {
+								if (paramsList != null) {
+									ProcedureType type = (ProcedureType)SymbolTable.getSymbol(procedureId);
+									type.addParams((ArrayList<LiteralType>) paramsList);
+								}
+								SymbolTable.push();
+							}
+					:} SEMICOLON declarations BEGIN statements END;
 
 function		::= FUNCTION IDENTIFIER:id opt_params:paramsList COLON type:t {: 
 							String functionId = (String)id;
@@ -147,13 +161,24 @@ opt_params		::= LEFT_PARENTHESIS params:paramsList RIGHT_PARENTHESIS {: RESULT =
 				|	LEFT_PARENTHESIS RIGHT_PARENTHESIS
 				|	/* empty */;
 
-params			::= params:paramsList SEMICOLON param:t {: ((ArrayList<LiteralType>)paramsList).add((LiteralType)t); RESULT = paramsList; :}
-				|	param:t {: List<LiteralType> paramsList = new ArrayList<LiteralType>();
-   					 					paramsList.add((LiteralType)t);
-   					 					RESULT = paramsList;  :};
+params			::= params:paramsList SEMICOLON param:t {: ((ArrayList<LiteralType>)paramsList).addAll((ArrayList<LiteralType>)t); RESULT = paramsList; :}
+				|	param:paramsList {: RESULT = paramsList;  :};
 
-param			::= identifiers:il COLON type:t {: mapTypes(il, null, t); RESULT = t; :}
-				|	VAR identifiers:il COLON type:t {: mapTypes(il, null, t); RESULT = t; :};
+param			::= identifiers:il COLON type:t {: 	mapTypes(il, null, t); 
+
+													List<LiteralType> paramsList = new ArrayList<LiteralType>();
+													for (int i = 0; i < ((ArrayList<String>)il).size(); i++) {
+														paramsList.add((LiteralType)t);
+													}
+
+													RESULT = paramsList; :}
+				|	VAR identifiers:il COLON type:t {: mapTypes(il, null, t); 
+													List<LiteralType> paramsList = new ArrayList<LiteralType>();
+													for (int i = 0; i < ((ArrayList<String>)il).size(); i++) {
+														paramsList.add((LiteralType)t);
+													}
+
+													RESULT = paramsList; :};
 
 identifiers		::= identifiers:il COMMA IDENTIFIER:id {: ((ArrayList<String>)il).add(((String)id).toLowerCase()); RESULT = il; :}
 				|	IDENTIFIER:id 	{:  List<String> il = new ArrayList<String>();
@@ -174,13 +199,62 @@ statement		::= attribuition
 				|	call
 				|	repeat;
 
-call			::= IDENTIFIER LEFT_PARENTHESIS opt_arguments RIGHT_PARENTHESIS;
+call			::= IDENTIFIER:id LEFT_PARENTHESIS opt_arguments:typesList {:	LiteralType type = SymbolTable.getSymbol((String)id);
+																				List<LiteralType> tList = (ArrayList<LiteralType>)typesList;
+																				if (type == null) {
+																					parser.sem_error("Procedure or function not defined.");
+																				} else {
+																					if (type instanceof FunctionType) {
+																						FunctionType funcType = (FunctionType)type;
+																						if (tList == null && funcType.getParamsTypes().size() > 0)
+																							parser.sem_error("Function not defined.");
+																						else if (tList != null && funcType.getParamsTypes().size() == 0) {
+																							parser.sem_error("Function not defined.");
+																						} else {
+																							if (tList.size() != funcType.getParamsTypes().size()) parser.sem_error("Function not defined.");
+																							else {
+																								for(int i = 0; i < tList.size(); i++) {
+																									if (!tList.get(i).getName().equals(funcType.getParamsTypes().get(i).getName())) {
+																										parser.sem_error("Function not defined.");
+																										break;
+																									}
+																								}
+																							}																							
+																						}
+																						RESULT = funcType.getReturnType();
+																					} else if (type instanceof ProcedureType) {
+																						ProcedureType procType = (ProcedureType)type;
 
-opt_arguments	::= arguments
+																						if (tList == null && procType.getParamsTypes().size() > 0) {
+																							parser.sem_error("Procedure not defined.");
+																						} else if (tList != null && procType.getParamsTypes().size() == 0) {
+																							parser.sem_error("Procedure not defined.");
+																						} else {
+																							if (tList.size() != procType.getParamsTypes().size()) parser.sem_error("Function not defined.");
+																							else {
+																								for(int i = 0; i < tList.size(); i++) {
+																									if (!tList.get(i).getName().equals(procType.getParamsTypes().get(i).getName())) {
+																										parser.sem_error("Function not defined.");
+																										break;
+																									}
+																								}
+																							}																							
+																						}
+																						RESULT = procType.getName();
+																					}
+																				}																				
+
+																			:} RIGHT_PARENTHESIS;
+
+opt_arguments	::= arguments:typesList {: RESULT = typesList; :}
 				|	/* empty */;
 
-arguments		::= arguments COMMA expression
-				|	expression;
+arguments		::= arguments:typesList COMMA expression:t {:	((ArrayList<LiteralType>)typesList).add((LiteralType)t);
+																RESULT = typesList;
+															:}
+				|	expression:t {:	List<LiteralType> typesList = new ArrayList<>(); 
+									typesList.add((LiteralType)t);
+									RESULT = typesList; :};
 
 attribuition	::= IDENTIFIER:id ASSIGN expression:t {: checkTypesAttr(id, t); :}
 				|	array ASSIGN expression;
