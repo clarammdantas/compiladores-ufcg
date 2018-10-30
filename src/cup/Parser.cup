@@ -22,15 +22,15 @@ parser code {:
 :};
 
 
+terminal Boolean	BOOLEAN;
+terminal Integer	INTEGER;
+terminal String		STRING, IDENTIFIER;
+
 terminal PROGRAM, BEGIN, END, VAR, FUNCTION, PROCEDURE, REPEAT, UNTIL;
 terminal EQ, NE, GT, LT, GE, LE, ADD, SUB, MUL, DIV, MOD, ASSIGN;
 terminal ARRAY, OF, RANGE;
 terminal LEFT_PARENTHESIS, RIGHT_PARENTHESIS, LEFT_BRACKET, RIGHT_BRACKET;
 terminal COMMA, COLON, SEMICOLON, DOT;
-
-terminal Boolean	BOOLEAN;
-terminal Integer	INTEGER;
-terminal String		STRING, IDENTIFIER;
 
 non terminal Program		root;
 non terminal List<Decl>		declarations;

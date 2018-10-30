@@ -2,5 +2,5 @@ program test;
 
 begin
 	repeat
-	until 2 * 3 >= 7;
+	until -1 * 2 - (3 + 4 / 5) mod 6 < 7;
 end.

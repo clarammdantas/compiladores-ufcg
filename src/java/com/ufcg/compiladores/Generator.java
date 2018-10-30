@@ -23,7 +23,7 @@ public class Generator {
 
 	public boolean preVisit(Program program) {
 		writer.println("section .text");
-		writer.println("\tglobal _start");
+		writer.println("\tglobal _start\n");
 		writer.println("_start:");
 		return true;
 	}
