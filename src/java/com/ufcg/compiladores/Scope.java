@@ -52,7 +52,16 @@ public class Scope {
 	
 	public static void overwrite(String name, Type t, Ref ref) {
 		Map<String, Instance> scope = stack.peek();
-		Instance i = new Instance(t, ref.get());
+		Instance i;
+		
+		if (t instanceof Type.Array) {
+			i = new Instance(t, Array.get(t));
+		}
+		
+		else {
+			i = new Instance(t, ref.get());
+		}
+		
 		scope.put(name, i);
 	}
 	

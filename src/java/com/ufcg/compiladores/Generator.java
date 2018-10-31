@@ -37,8 +37,12 @@ public class Generator {
 		writer.println("\tmov eax, 1");
 		writer.println("\tmov ebx, 0");
 		writer.println("\tint 0x80\n");
+		
+		writer.println("section .data");
+		
+		for (Array a : Array.list) writer.println(String.format("\t%s times %d dd 0", a.ref, a.size));
 
-		writer.println("section .bss");
+		writer.println("\nsection .bss");
 		
 		for (int i = 0; i < Ref.tmp.size(); ++i) writer.println("\tt" + i + " resd 1");
 		for (int i = 0; i < Ref.var.size(); ++i) writer.println("\tv" + i + " resd 1");
@@ -119,6 +123,19 @@ public class Generator {
 		writer.println(String.format("\tmov [%s], eax\n", s.i.ref));
 	}
 
+	public boolean preVisit(Stmt.Array s) {
+		Ref.tmp.save();
+		return true;
+	}
+
+	public void postVisit(Stmt.Array s) {
+		Ref.tmp.restore();
+
+		writer.println(String.format("\tmov eax, [%s]", s.e.ref));
+		writer.println(String.format("\tmov ecx, [%s]", s.a.ptr));
+		writer.println(String.format("\tmov [ecx], eax\n"));
+	}
+	
 	public boolean preVisit(Stmt.Call c) {
 		Ref.tmp.save();
 		return true;
@@ -247,11 +264,48 @@ public class Generator {
 		writer.println(String.format("\tcall %s", c.l));
 		writer.println(String.format("\tmov [%s], ebx\n", c.ref));
 	}
+	
+	public boolean preVisit(Expr.Array a) {
+		Ref.tmp.save();
+		return true;
+	}
+
+	public void postVisit(Expr.Array a) {
+		Ref.tmp.restore();
+		
+		a.ref = Ref.tmp.get();
+		a.ptr = Ref.tmp.get();
+		
+		int width = 4;
+
+		writer.println(String.format("\tmov ebx, 0"));
+		writer.println(String.format("\tmov ecx, %s\n", a.i.ref));
+		
+		for (int i = 0; i < a.s.size(); ++i) {
+			
+			Type.Range r = a.s.get(i);
+			Expr e = a.e.get(i);
+			
+			writer.println(String.format("\tmov eax, [%s]", e.ref));
+			writer.println(String.format("\tsub eax, %d", r.l));
+			writer.println(String.format("\tmov edx, %d", width));
+			writer.println(String.format("\tmul edx"));
+			writer.println(String.format("\tadd ebx, eax\n", e.ref));
+			
+			width = width * (r.r - r.l + 1);
+		}
+
+		writer.println(String.format("\tadd ecx, ebx\n"));
+		
+		writer.println(String.format("\tmov eax, [ecx]"));
+		writer.println(String.format("\tmov [%s], eax", a.ref));
+		writer.println(String.format("\tmov [%s], ecx\n", a.ptr));
+	}
 
 	public void visit(Expr.Literal e) {
 		e.ref = Ref.tmp.get();
 
-		writer.println(String.format("\tmov eax, %d", e.val));
+		writer.println(String.format("\tmov eax, %s", e.val));
 		writer.println(String.format("\tmov [%s], eax\n", e.ref));
 	}
 }

@@ -46,11 +46,10 @@ non terminal List<Expr>		expressions, opt_arguments, arguments;
 non terminal Expr			expression, exp0, exp1, exp2, exp3, exp4, literal, opt_init, call_expr;
 
 non terminal Type			type;
+non terminal Type.Range		subscript;
+non terminal Expr.Array		array;
 non terminal List<Type>		opt_params, params, param;
 non terminal List<Token>	identifiers;
-
-non terminal subscript;
-non terminal array;
 
 start with root;
 
@@ -71,15 +70,13 @@ declaration		::= VAR variables:v {: RESULT = new Decl.Compose(v); :}
 variables		::= variables:l variable:v SEMICOLON {: l.add(v); RESULT = l; :}
 				|	variable:v SEMICOLON {: RESULT = new ArrayList<>(); RESULT.add(v); :};
 
-variable		::= identifiers:l COMMA IDENTIFIER:id COLON type:t {: for(Token token : l) { Log.focus(token.loc); Scope.add(token.name, t, Ref.var); } Log.focus(idxleft); Scope.add(id, t, Ref.var); RESULT = Decl.noop; :}
+variable		::= identifiers:l COMMA IDENTIFIER:id COLON type:t {: l.add(new Token(id, idxleft)); for(Token token : l) { Log.focus(token.loc); Scope.add(token.name, t, Ref.var); } RESULT = Decl.noop; :}
 				|	IDENTIFIER:id COLON type:t {: Log.focus(idxleft); Scope.add(id, t, Ref.var); :} opt_init:e {: RESULT = new Decl.Init(Scope.get(id), e); :};
 
 type			::= IDENTIFIER:id {: Log.focus(idxleft); RESULT = Type.translate(id); :}
-				|	ARRAY OF type
-				|	ARRAY LEFT_BRACKET subscript RIGHT_BRACKET OF type;
+				|	ARRAY LEFT_BRACKET subscript:s RIGHT_BRACKET OF type:t {: RESULT = new Type.Array(s, t); :};
 
-subscript		::= IDENTIFIER
-				|	expression RANGE expression; // expressões devem ser constantes
+subscript		::= INTEGER:l RANGE INTEGER:r {: RESULT = new Type.Range(l, r); :}; 
 
 opt_init		::= EQ expression:e {: Log.focus(exleft); if (e.dynamic) Log.error("Expected a constant expression"); RESULT = e; :}
 				|	/* empty */;
@@ -97,17 +94,14 @@ opt_params		::= LEFT_PARENTHESIS params:p RIGHT_PARENTHESIS {: RESULT = p; :}
 params			::= params:l SEMICOLON param:p {: RESULT = l; RESULT.addAll(p); :}
 				|	param:p {: RESULT = p; :};
 
-param			::= identifiers:l COLON IDENTIFIER:id {: Log.focus(idxleft); Type t = Type.translate(id); RESULT = new ArrayList<>(); for(Token token : l) { Scope.overwrite(token.name, t, Ref.var); RESULT.add(t); } :}
-				|	VAR identifiers COLON IDENTIFIER;
+param			::= identifiers:l COLON IDENTIFIER:id {: Log.focus(idxleft); Type t = Type.translate(id); RESULT = new ArrayList<>(); for(Token token : l) { Scope.overwrite(token.name, t, Ref.var); RESULT.add(t); } :};
 
 identifiers		::= identifiers:l COMMA IDENTIFIER:id {: Token token = new Token(id, idxleft); l.add(token); RESULT = l; :}
 				|	IDENTIFIER:id {: RESULT = new ArrayList<>(); Token token = new Token(id, idxleft); RESULT.add(token); :};
 
-array			::= IDENTIFIER LEFT_BRACKET expressions RIGHT_BRACKET;
-
 literal			::= BOOLEAN:b {: RESULT = new Expr.Literal(Type.Boolean, b? 1 : 0); :}
 				|	INTEGER:i {: RESULT = new Expr.Literal(Type.Integer, i); :}
-				|	STRING;
+				|	STRING:s {: RESULT = new Expr.Literal(Type.Text, '\'' + s + '\''); :};
 
 statements		::= statements:l statement:s SEMICOLON {: l.add(s); RESULT = l; :}
 				|	/* empty */ {: RESULT = new ArrayList<>(); :};
@@ -127,11 +121,13 @@ opt_arguments	::= arguments:l {: RESULT = l; :}
 arguments		::= arguments:l COMMA expression:e {: l.add(e); RESULT = l; :}
 				|	expression:e {: RESULT = new ArrayList<>(); RESULT.add(e); :};
 
-assign			::= IDENTIFIER:id ASSIGN expression:e {: Log.focus(idxleft); RESULT = new Stmt.Assign(Scope.get(id), e); :}
-				|	array ASSIGN expression;
+array			::= IDENTIFIER:id LEFT_BRACKET expressions:e RIGHT_BRACKET {: Log.focus(idxleft); RESULT = new Expr.Array(Scope.get(id), e); :};
 
-expressions		::= expressions COMMA expression
-				|	expression;
+assign			::= IDENTIFIER:id ASSIGN:op expression:e {: Log.focus(opxleft); RESULT = new Stmt.Assign(Scope.get(id), e); :}
+				|	array:a ASSIGN:op expression:e {: Log.focus(opxleft); RESULT = new Stmt.Array(a, e); :};
+
+expressions		::= expressions:l COMMA expression:e {: l.add(e); Log.focus(exleft); if (Type.Integer.check(e.t) == Type.Validation.ERROR) Log.error("Expected an Integer expression"); RESULT = l; :}
+				|	expression:e {: Log.focus(exleft); if (Type.Integer.check(e.t) == Type.Validation.ERROR) Log.error("Expected an Integer expression"); RESULT = new ArrayList<>(); RESULT.add(e); :};
 
 expression		::= exp0:e {: RESULT = e; :};
 
@@ -158,9 +154,9 @@ exp3			::= ADD:op exp3:e {: Log.focus(opxleft); RESULT = e; :}
 	
 exp4			::= IDENTIFIER:id {: Log.focus(idxleft); RESULT = new Expr.Identifier(Scope.get(id)); :}
 				|	LEFT_PARENTHESIS exp0:e RIGHT_PARENTHESIS {: RESULT = e; :}
+				|	array:a {: RESULT = a; :}
 				|	literal:l {: RESULT = l; :}
-				|	call_expr:c {: RESULT = c; :}
-				|	array;
+				|	call_expr:c {: RESULT = c; :};
 
 repeat			::= REPEAT statements:s UNTIL expression:e {: Log.focus(exleft); RESULT = new Stmt.Repeat(s, e); :};
 	

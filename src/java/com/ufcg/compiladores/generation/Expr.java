@@ -136,9 +136,9 @@ public abstract class Expr implements Generator.Visitable {
 	}
 
     public static class Literal extends Expr {
-    	public Integer val;
+    	public Object val;
 
-		public Literal(Type t, Integer val) {
+		public Literal(Type t, Object val) {
 			this.t = t;
 			this.val = val;
 
@@ -195,4 +195,50 @@ public abstract class Expr implements Generator.Visitable {
 			gen.postVisit(this);
 		}
 	}
+    
+    public static class Array extends Expr {
+    	
+    	public String ptr;
+    	public Scope.Instance i;
+    	public List<Expr> e;
+    	
+    	public List<Type.Range> s = new ArrayList<>();
+    	
+    	public Array(Scope.Instance i, List<Expr> e) {
+    		this.i = i;
+    		this.e = e;
+    		
+    		if (i == null);
+    		
+    		else if (i.t instanceof Type.Array) {
+    			
+    			Type cur = i.t;
+    			while (cur instanceof Type.Array) {
+    				Type.Array t = (Type.Array) cur;
+    				
+    				s.add(t.s);
+    				cur = t.t;
+    			}
+    			
+    			this.t = cur;
+    			
+    			if (e.size() != s.size()) {
+    				Log.error(String.format("Number of indexes should be %d", s.size()));
+    			}
+    		}
+    		
+    		else {
+    			Log.error(String.format("Type %s is not indexable", i.t));
+    		}
+    		
+			this.dynamic = true;
+    	}
+
+		@Override
+		public void accept(Generator gen) {
+			if(gen.preVisit(this) == false) return;
+			for(Expr expr : e) expr.accept(gen);
+			gen.postVisit(this);
+		}
+    }
 }

@@ -17,8 +17,7 @@ public abstract class Stmt implements Generator.Visitable {
 			if(i != null) {
 				switch (i.t.check(e.t)) {
 				case ERROR:
-					String message = String.format("Incompatible types %s and %s", i.t, e.t);
-					Log.error(message);
+					Log.error(String.format("Incompatible types %s and %s", i.t, e.t));
 					break;
 					
 				default:
@@ -30,6 +29,33 @@ public abstract class Stmt implements Generator.Visitable {
 		@Override
 		public void accept(Generator gen) {
 			if(gen.preVisit(this) == false) return;
+			e.accept(gen);
+			gen.postVisit(this);
+		}
+	}
+	
+	public static class Array extends Stmt {
+		public Expr.Array a;
+		public Expr e;
+		
+		public Array(Expr.Array a, Expr e) {
+			this.a = a;
+			this.e = e;
+			
+			switch (a.t.check(e.t)) {
+			case ERROR:
+				Log.error(String.format("Incompatible types %s and %s", a.t, e.t));
+				break;
+				
+			default:
+				break;
+			}
+		}
+
+		@Override
+		public void accept(Generator gen) {
+			if(gen.preVisit(this) == false) return;
+			a.accept(gen);
 			e.accept(gen);
 			gen.postVisit(this);
 		}

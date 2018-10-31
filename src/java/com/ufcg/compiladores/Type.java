@@ -64,6 +64,71 @@ public abstract class Type {
 		}
 	};
 	
+	public static class Range extends Type {
+		
+		public Integer l;
+		public Integer r;
+		
+		public Range(int l, int r) {
+			this.l = l;
+			this.r = r;
+		}
+		
+		@Override
+		public String toString() {	
+			StringBuilder builder = new StringBuilder();
+			
+			builder.append("[");		
+			builder.append(l.toString());
+			builder.append("..");
+			builder.append(r.toString());
+			builder.append("]");
+			
+			return builder.toString();
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof Range == false) return false;
+			
+			Range other = (Range) obj;
+			
+			return l.equals(other.l) && r.equals(other.r);
+		}
+	}
+	
+	public static class Array extends Type {
+		
+		public Type.Range s;
+		public Type t;
+		
+		public Array(Type.Range s, Type t) {
+			this.s = s;
+			this.t = t;
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			
+			builder.append("Array");
+			builder.append(s.toString());
+			builder.append(" of ");
+			builder.append(t.toString());
+			
+			return builder.toString();
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof Array == false) return false;
+			
+			Array other = (Array) obj;
+			
+			return s.equals(other.s) && t.equals(other.t);
+		}
+	}
+	
 	public static class Call extends Type {
 		
 		public List<Type> params;
