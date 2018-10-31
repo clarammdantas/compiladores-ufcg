@@ -11,6 +11,34 @@ public abstract class Decl implements Generator.Visitable {
 		public void accept(Generator gen) {}
 	};
 	
+	public static class Compose extends Decl {
+		
+		public List<Decl> d = new ArrayList<>();
+		
+		public Compose(List<Decl> d) {
+			this.d = d;
+		}
+
+		@Override
+		public void accept(Generator gen) {
+			for(Decl decl : d) decl.accept(gen);
+		}
+	}
+	
+	public static class Init extends Decl {
+		
+		public Stmt.Assign s;
+		
+		public Init(Scope.Instance i, Expr e) {
+			this.s = new Stmt.Assign(i, e);
+		}
+
+		@Override
+		public void accept(Generator gen) {
+			s.accept(gen);
+		}
+	}
+	
 	public static class Procedure extends Decl {
 		
 		public int varLo;

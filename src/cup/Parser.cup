@@ -38,8 +38,8 @@ terminal COMMA, COLON, SEMICOLON, DOT;
 
 non terminal Root			root;
 non terminal Block			block;
-non terminal List<Decl>		declarations, variables, variable;
-non terminal Decl			declaration, procedure, function;
+non terminal List<Decl>		declarations, variables;
+non terminal Decl			declaration, procedure, function, variable;
 non terminal List<Stmt>		statements, body;
 non terminal Stmt			statement, repeat, assign;
 non terminal List<Expr>		expressions, opt_arguments, arguments;
@@ -64,15 +64,15 @@ body			::= BEGIN statements:s END {: RESULT = s; :}
 declarations	::= declarations:l declaration:d {: l.add(d); RESULT = l; :}
 				|	/* empty */ {: RESULT = new ArrayList<>(); :};
 
-declaration		::= VAR variables {: RESULT = Decl.noop; :}
+declaration		::= VAR variables:v {: RESULT = new Decl.Compose(v); :}
 				|	function SEMICOLON
 				|	procedure:p SEMICOLON {: RESULT = p; :};
 
-variables		::= variables variable SEMICOLON
-				|	variable SEMICOLON;
+variables		::= variables:l variable:v SEMICOLON {: l.add(v); RESULT = l; :}
+				|	variable:v SEMICOLON {: RESULT = new ArrayList<>(); RESULT.add(v); :};
 
-variable		::= identifiers:l COMMA IDENTIFIER:id COLON type:t {: for(Token token : l) { Log.focus(token.loc); Scope.add(token.name, t, Ref.var); } Log.focus(idxleft); Scope.add(id, t, Ref.var); :}
-				|	IDENTIFIER:id COLON type:t opt_init:e {: Log.focus(idxleft); Scope.add(id, t, Ref.var); :}; // TODO
+variable		::= identifiers:l COMMA IDENTIFIER:id COLON type:t {: for(Token token : l) { Log.focus(token.loc); Scope.add(token.name, t, Ref.var); } Log.focus(idxleft); Scope.add(id, t, Ref.var); RESULT = Decl.noop; :}
+				|	IDENTIFIER:id COLON type:t {: Log.focus(idxleft); Scope.add(id, t, Ref.var); :} opt_init:e {: RESULT = new Decl.Init(Scope.get(id), e); :};
 
 type			::= IDENTIFIER:id {: Log.focus(idxleft); RESULT = Type.translate(id); :}
 				|	ARRAY OF type
@@ -81,7 +81,7 @@ type			::= IDENTIFIER:id {: Log.focus(idxleft); RESULT = Type.translate(id); :}
 subscript		::= IDENTIFIER
 				|	expression RANGE expression; // expressões devem ser constantes
 
-opt_init		::= EQ expression // expressões devem ser constantes
+opt_init		::= EQ expression:e {: Log.focus(exleft); if (e.dynamic) Log.error("Expected a constant expression"); RESULT = e; :}
 				|	/* empty */;
 
 procedure		::= PROCEDURE IDENTIFIER:id {: Log.focus(idxleft); Scope.add(id, null, Ref.lab); Scope.push(); Ref.var.save(); :} opt_params:p {: Scope.get(id).t = new Type.Call(p); :} SEMICOLON block:b {: Scope.pop(); RESULT = new Decl.Procedure(id, p, b); :}
