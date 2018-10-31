@@ -78,6 +78,35 @@ public class Generator {
 		writer.println(String.format("%s:", p.l2));
 	}
 
+	public boolean preVisit(Decl.Function f) {
+		writer.println(String.format("\tjmp %s", f.l2));
+		writer.println(String.format("%s:", f.l1));
+		
+		for (int i = f.varLo; i < f.varHi; ++i) {
+			writer.println(String.format("\tmov eax, [v%d]", i));
+			writer.println(String.format("\tpush eax\n"));
+		}
+		
+		for (int i = 0; i < f.varPm; ++i) {
+			writer.println(String.format("\tmov eax, [t%d]", i));
+			writer.println(String.format("\tmov [v%d], eax\n", i + f.varLo));
+		}
+		
+		return true;
+	}
+
+	public void postVisit(Decl.Function f) {
+		writer.println(String.format("\tmov ebx, [%s]\n", f.ret));
+		
+		for (int i = f.varHi - 1; i >= f.varLo; --i) {
+			writer.println(String.format("\tpop eax"));
+			writer.println(String.format("\tmov [v%d], eax", i));
+		}
+		
+		writer.println("\tret");
+		writer.println(String.format("%s:", f.l2));
+	}
+
 	public boolean preVisit(Stmt.Assign s) {
 		Ref.tmp.save();
 		return true;
@@ -88,6 +117,17 @@ public class Generator {
 
 		writer.println(String.format("\tmov eax, [%s]", s.e.ref));
 		writer.println(String.format("\tmov [%s], eax\n", s.i.ref));
+	}
+
+	public boolean preVisit(Stmt.Call c) {
+		Ref.tmp.save();
+		return true;
+	}
+
+	public void postVisit(Stmt.Call c) {
+		Ref.tmp.restore();
+		
+		writer.println(String.format("\tcall %s", c.l));
 	}
 
 	public boolean preVisit(Stmt.Repeat r) {
@@ -201,7 +241,11 @@ public class Generator {
 
 	public void postVisit(Expr.Call c) {
 		Ref.tmp.restore();
-		writer.println(String.format("\tcall %s\n", c.l));
+		
+		c.ref = Ref.tmp.get();
+		
+		writer.println(String.format("\tcall %s", c.l));
+		writer.println(String.format("\tmov [%s], ebx\n", c.ref));
 	}
 
 	public void visit(Expr.Literal e) {

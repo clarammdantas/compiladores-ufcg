@@ -121,8 +121,10 @@ public abstract class Expr implements Generator.Visitable {
     	public Scope.Instance i;
 
 		public Identifier(Scope.Instance i) {
-			this.i = i;
-			this.t = i.t;
+			if (i != null) {
+				this.i = i;
+				this.t = i.t;
+			}
 
 			this.dynamic = true;
 		}
@@ -155,14 +157,19 @@ public abstract class Expr implements Generator.Visitable {
     	public List<Expr> args;
 
 		public Call(Scope.Instance i, List<Expr> args) {
-			if (i != null) {
+			if (i == null);
+			
+			else if (i.t instanceof Type.Call) {
+
+				this.t = ((Type.Call) i.t).ret;
+				
 				this.l = i.ref;
 				this.args = args;
-	
+				
 				List<Type> types = new ArrayList<>();
 				for(Expr e : args) types.add(e.t);
 				
-				Type t = new Type.Call(types);
+				Type t = new Type.Call(types, null);
 				
 				switch (i.t.check(t)) {
 				case ERROR:
@@ -172,6 +179,10 @@ public abstract class Expr implements Generator.Visitable {
 				default:
 					break;
 				}
+			}
+			
+			else {
+				Log.error(String.format("Type %s is not callable", i.t));
 			}
 
 			this.dynamic = true;

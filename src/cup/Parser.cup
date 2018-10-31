@@ -41,9 +41,9 @@ non terminal Block			block;
 non terminal List<Decl>		declarations, variables;
 non terminal Decl			declaration, procedure, function, variable;
 non terminal List<Stmt>		statements, body;
-non terminal Stmt			statement, repeat, assign;
+non terminal Stmt			statement, repeat, assign, call_stmt;
 non terminal List<Expr>		expressions, opt_arguments, arguments;
-non terminal Expr			expression, exp0, exp1, exp2, exp3, exp4, literal, opt_init, call;
+non terminal Expr			expression, exp0, exp1, exp2, exp3, exp4, literal, opt_init, call_expr;
 
 non terminal Type			type;
 non terminal List<Type>		opt_params, params, param;
@@ -65,7 +65,7 @@ declarations	::= declarations:l declaration:d {: l.add(d); RESULT = l; :}
 				|	/* empty */ {: RESULT = new ArrayList<>(); :};
 
 declaration		::= VAR variables:v {: RESULT = new Decl.Compose(v); :}
-				|	function SEMICOLON
+				|	function:f SEMICOLON {: RESULT = f; :}
 				|	procedure:p SEMICOLON {: RESULT = p; :};
 
 variables		::= variables:l variable:v SEMICOLON {: l.add(v); RESULT = l; :}
@@ -84,10 +84,10 @@ subscript		::= IDENTIFIER
 opt_init		::= EQ expression:e {: Log.focus(exleft); if (e.dynamic) Log.error("Expected a constant expression"); RESULT = e; :}
 				|	/* empty */;
 
-procedure		::= PROCEDURE IDENTIFIER:id {: Log.focus(idxleft); Scope.add(id, null, Ref.lab); Scope.push(); Ref.var.save(); :} opt_params:p {: Scope.get(id).t = new Type.Call(p); :} SEMICOLON block:b {: Scope.pop(); RESULT = new Decl.Procedure(id, p, b); :}
+procedure		::= PROCEDURE IDENTIFIER:id {: Log.focus(idxleft); Scope.add('.' + id, null, Ref.lab); Scope.push(); Ref.var.save(); :} opt_params:p {: Scope.get('.' + id).t = new Type.Call(p, Type.Void); :} SEMICOLON block:b {: RESULT = new Decl.Procedure(id, p, b); Scope.pop(); :}
 				|	PROCEDURE error END;
 
-function		::= FUNCTION IDENTIFIER opt_params COLON IDENTIFIER SEMICOLON {: Scope.push(); :} block {: Scope.pop(); :}
+function		::= FUNCTION IDENTIFIER:id {: Log.focus(idxleft); Scope.add('.' + id, null, Ref.lab); Scope.push(); Ref.var.save(); :} opt_params:p COLON IDENTIFIER:t SEMICOLON {: Scope.Instance i = Scope.get('.' + id); Log.focus(txleft); Type type = Type.translate(t); i.t = new Type.Call(p, type); Log.focus(idxleft); Scope.add(id, type, Ref.var); :} block:b {: RESULT = new Decl.Function(id, p, b); Scope.pop(); :}
 				|	FUNCTION error END;
 
 opt_params		::= LEFT_PARENTHESIS params:p RIGHT_PARENTHESIS {: RESULT = p; :}
@@ -114,10 +114,12 @@ statements		::= statements:l statement:s SEMICOLON {: l.add(s); RESULT = l; :}
 
 statement		::= assign:a {: RESULT = a; :}
 				|	repeat:r {: RESULT = r; :}
-				|	call:c {: RESULT = new Stmt.Call(c); :}
+				|	call_stmt:c {: RESULT = c; :}
 				|	error;
 
-call			::= IDENTIFIER:id LEFT_PARENTHESIS opt_arguments:a RIGHT_PARENTHESIS {: Log.focus(idxleft); RESULT = new Expr.Call(Scope.get(id), a); :};
+call_stmt		::= IDENTIFIER:id LEFT_PARENTHESIS opt_arguments:a RIGHT_PARENTHESIS {: Log.focus(idxleft); RESULT = new Stmt.Call(Scope.get('.' + id), a); :};
+
+call_expr		::= IDENTIFIER:id LEFT_PARENTHESIS opt_arguments:a RIGHT_PARENTHESIS {: Log.focus(idxleft); RESULT = new Expr.Call(Scope.get('.' + id), a); :};
 
 opt_arguments	::= arguments:l {: RESULT = l; :}
 				|	/* empty */ {: RESULT = new ArrayList<>(); :};
@@ -157,7 +159,7 @@ exp3			::= ADD:op exp3:e {: Log.focus(opxleft); RESULT = e; :}
 exp4			::= IDENTIFIER:id {: Log.focus(idxleft); RESULT = new Expr.Identifier(Scope.get(id)); :}
 				|	LEFT_PARENTHESIS exp0:e RIGHT_PARENTHESIS {: RESULT = e; :}
 				|	literal:l {: RESULT = l; :}
-				|	call
+				|	call_expr:c {: RESULT = c; :}
 				|	array;
 
 repeat			::= REPEAT statements:s UNTIL expression:e {: Log.focus(exleft); RESULT = new Stmt.Repeat(s, e); :};

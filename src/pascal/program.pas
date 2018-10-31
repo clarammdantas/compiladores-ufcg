@@ -1,14 +1,15 @@
 program test;
 
-var
-	x: integer = 1;
-	y: integer = y;
+var x: integer;
 
-procedure f(x: integer);
+procedure f(x: boolean);
 begin
-	f(x + 1);
+end;
+
+procedure g(x: boolean);
+begin
 end;
 
 begin
-	f(0);
+	f := x();
 end.

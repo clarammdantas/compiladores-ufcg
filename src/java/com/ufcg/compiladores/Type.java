@@ -57,11 +57,21 @@ public abstract class Type {
 		}
 	};
 	
+	public static Type Void = new Type() {
+		@Override
+		public String toString() {
+			return "Void";
+		}
+	};
+	
 	public static class Call extends Type {
-		private List<Type> params;
 		
-		public Call(List<Type> params) {
+		public List<Type> params;
+		public Type ret;
+		
+		public Call(List<Type> params, Type ret) {
 			this.params = params;
+			this.ret = ret;
 		}
 		
 		@Override
